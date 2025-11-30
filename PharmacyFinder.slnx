@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="PharmacyFinder.API/PharmacyFinder.API.csproj" />
+  <Project Path="PharmacyFinder.Application/PharmacyFinder.Application.csproj" />
+  <Project Path="PharmacyFinder.Core/PharmacyFinder.Core.csproj" />
+  <Project Path="PharmacyFinder.Infrastructure/PharmacyFinder.Infrastructure.csproj" />
+</Solution>

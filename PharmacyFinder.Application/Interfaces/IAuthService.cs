@@ -1,0 +1,10 @@
+using PharmacyFinder.Core.DTOs;
+
+namespace PharmacyFinder.Application.Interfaces
+{
+    public interface IAuthService
+    {
+        Task<AuthResponseDto> RegisterAsync(RegisterRequestDto request);
+        Task<AuthResponseDto> LoginAsync(LoginRequestDto request);
+    }
+}
