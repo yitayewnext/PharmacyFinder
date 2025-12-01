@@ -10,19 +10,23 @@ namespace PharmacyFinder.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "LicenseNumber",
-                table: "Users",
-                type: "nvarchar(100)",
-                maxLength: 100,
-                nullable: true);
+            migrationBuilder.Sql(@"
+                IF NOT EXISTS (
+                    SELECT 1 FROM sys.columns 
+                    WHERE object_id = OBJECT_ID('Users') AND name = 'LicenseNumber'
+                )
+                BEGIN
+                    ALTER TABLE Users ADD LicenseNumber NVARCHAR(100) NULL;
+                END
+            ");
 
-            migrationBuilder.CreateIndex(
-                name: "IX_Users_LicenseNumber",
-                table: "Users",
-                column: "LicenseNumber",
-                unique: true,
-                filter: "[LicenseNumber] IS NOT NULL");
+            migrationBuilder.Sql(@"
+                IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Users_LicenseNumber')
+                BEGIN
+                    CREATE UNIQUE NONCLUSTERED INDEX IX_Users_LicenseNumber
+                    ON Users(LicenseNumber) WHERE LicenseNumber IS NOT NULL;
+                END
+            ");
         }
 
         /// <inheritdoc />

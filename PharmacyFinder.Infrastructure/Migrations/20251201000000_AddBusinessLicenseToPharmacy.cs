@@ -10,13 +10,15 @@ namespace PharmacyFinder.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "BusinessLicense",
-                table: "Pharmacies",
-                type: "nvarchar(100)",
-                maxLength: 100,
-                nullable: false,
-                defaultValue: "");
+            migrationBuilder.Sql(@"
+                IF NOT EXISTS (
+                    SELECT 1 FROM sys.columns 
+                    WHERE object_id = OBJECT_ID('Pharmacies') AND name = 'BusinessLicense'
+                )
+                BEGIN
+                    ALTER TABLE Pharmacies ADD BusinessLicense NVARCHAR(100) NOT NULL DEFAULT '';
+                END
+            ");
         }
 
         /// <inheritdoc />

@@ -9,6 +9,7 @@ namespace PharmacyFinder.Infrastructure.Data
 
         public DbSet<User> Users => Set<User>();
         public DbSet<Pharmacy> Pharmacies => Set<Pharmacy>();
+        public DbSet<Medicine> Medicines => Set<Medicine>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -44,6 +45,20 @@ namespace PharmacyFinder.Infrastructure.Data
                     .WithMany()
                     .HasForeignKey(p => p.OwnerId)
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<Medicine>(entity =>
+            {
+                entity.Property(m => m.Name).IsRequired().HasMaxLength(100);
+                entity.Property(m => m.Description).HasMaxLength(500);
+                entity.Property(m => m.Manufacturer).HasMaxLength(100);
+                entity.Property(m => m.Category).HasMaxLength(50);
+                entity.Property(m => m.Price).HasColumnType("decimal(18,2)");
+
+                entity.HasOne(m => m.Pharmacy)
+                    .WithMany()
+                    .HasForeignKey(m => m.PharmacyId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }

@@ -26,6 +26,21 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'pharmacy/stock',
+    loadComponent: () => import('./features/pharmacy/stock-management/stock-list/stock-list.component').then(m => m.StockListComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'pharmacy/stock/add',
+    loadComponent: () => import('./features/pharmacy/stock-management/add-edit-medicine/add-edit-medicine.component').then(m => m.AddEditMedicineComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'pharmacy/stock/edit/:id',
+    loadComponent: () => import('./features/pharmacy/stock-management/add-edit-medicine/add-edit-medicine.component').then(m => m.AddEditMedicineComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'admin/pharmacy-approval',
     loadComponent: () => import('./features/admin/pharmacy-approval/pharmacy-approval.component').then(m => m.PharmacyApprovalComponent),
     canActivate: [authGuard]

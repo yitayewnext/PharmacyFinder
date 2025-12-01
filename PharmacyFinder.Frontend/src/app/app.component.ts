@@ -38,6 +38,15 @@ import { filter } from 'rxjs/operators';
               Register Pharmacy
             </a>
             <a 
+              *ngIf="isPharmacyOwner()" 
+              routerLink="/pharmacy/stock" 
+              class="nav-link" 
+              [class.active]="currentRoute.startsWith('/pharmacy/stock')"
+              (click)="closeMobileMenu()"
+            >
+              Stock Management
+            </a>
+            <a 
               *ngIf="isAdmin()" 
               routerLink="/admin/pharmacy-approval" 
               class="nav-link" 
@@ -429,7 +438,7 @@ import { filter } from 'rxjs/operators';
 export class AppComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
-  
+
   currentUser: User | null = null;
   isAuthenticated = false;
   currentRoute = '';

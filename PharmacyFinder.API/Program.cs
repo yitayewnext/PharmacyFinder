@@ -47,6 +47,7 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPharmacyService, PharmacyService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IMedicineService, MedicineService>();
 
 // Security Services
 builder.Services.AddScoped<IPasswordHasher, Argon2PasswordHasher>();
