@@ -28,7 +28,7 @@ namespace PharmacyFinder.Infrastructure.Data
 
             modelBuilder.Entity<Pharmacy>(entity =>
             {
-                entity.HasIndex(p => p.LicenseNumber).IsUnique();
+                entity.HasIndex(p => p.LicenseNumber); // Removed IsUnique() to allow multiple pharmacies per owner with same license
                 entity.Property(p => p.Name).IsRequired().HasMaxLength(200);
                 entity.Property(p => p.Address).IsRequired().HasMaxLength(500);
                 entity.Property(p => p.City).IsRequired().HasMaxLength(100);

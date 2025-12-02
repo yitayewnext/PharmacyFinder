@@ -1,101 +1,101 @@
-<div class="container mx-auto px-4 py-8">
-  <div class="flex justify-between items-center mb-6">
-    <h2 class="text-2xl font-bold text-gray-800">Stock Management</h2>
-    <a routerLink="/pharmacy/stock/add"
-      class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-300">
+<div class="stock-container">
+  <div class="stock-header">
+    <div class="header-left">
+      <h2>Stock Management</h2>
+      <div class="pharmacy-selector">
+        <label for="pharmacy-select" class="pharmacy-label">Filter by Pharmacy:</label>
+        <select 
+          id="pharmacy-select"
+          [value]="selectedPharmacyId === 'all' ? 'all' : (selectedPharmacyId || '')" 
+          (change)="onPharmacyChange($event)" 
+          class="form-select">
+          <option value="all">All Pharmacies</option>
+          <option *ngFor="let pharmacy of pharmacies" [value]="pharmacy.id">
+            {{ pharmacy.name }}
+          </option>
+        </select>
+      </div>
+    </div>
+    <a [routerLink]="['/pharmacy/stock/add']" [queryParams]="getAddMedicineQueryParams()" class="add-medicine-btn">
       Add Medicine
     </a>
   </div>
 
-  <div *ngIf="isLoading" class="text-center py-8">
-    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-    <p class="mt-4 text-gray-600">Loading stock...</p>
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p class="loading-text">Loading stock...</p>
   </div>
 
-  <div *ngIf="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
-    <strong class="font-bold">Error!</strong>
-    <span class="block sm:inline"> {{ error }}</span>
+  <div *ngIf="error" class="error-alert" role="alert">
+    <strong>Error!</strong>
+    <span>{{ error }}</span>
   </div>
 
   <div *ngIf="!isLoading && !error">
-    <div class="bg-white shadow-md rounded-lg overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="min-w-full leading-normal">
-          <thead>
-            <tr>
-              <th
-                class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Name
-              </th>
-              <th
-                class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Category
-              </th>
-              <th
-                class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Price
-              </th>
-              <th
-                class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Quantity
-              </th>
-              <th
-                class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Expiry Date
-              </th>
-              <th
-                class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let medicine of medicines" class="hover:bg-gray-50">
-              <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                <div class="flex items-center">
-                  <div class="ml-3">
-                    <p class="text-gray-900 whitespace-no-wrap font-semibold">
-                      {{ medicine.name }}
-                    </p>
-                    <p class="text-gray-600 whitespace-no-wrap text-xs">
-                      {{ medicine.manufacturer }}
-                    </p>
-                  </div>
-                </div>
-              </td>
-              <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                <p class="text-gray-900 whitespace-no-wrap">{{ medicine.category }}</p>
-              </td>
-              <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                <p class="text-gray-900 whitespace-no-wrap">${{ medicine.price }}</p>
-              </td>
-              <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                <span
-                  [ngClass]="{'bg-red-200 text-red-900': medicine.quantity < 10, 'bg-green-200 text-green-900': medicine.quantity >= 10}"
-                  class="relative inline-block px-3 py-1 font-semibold leading-tight rounded-full">
-                  <span aria-hidden="true" class="absolute inset-0 opacity-50 rounded-full"></span>
-                  <span class="relative">{{ medicine.quantity }}</span>
-                </span>
-              </td>
-              <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                <p class="text-gray-900 whitespace-no-wrap">{{ medicine.expiryDate | date }}</p>
-              </td>
-              <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                <div class="flex space-x-2">
-                  <a [routerLink]="['/pharmacy/stock/edit', medicine.id]"
-                    class="text-blue-600 hover:text-blue-900">Edit</a>
-                  <button (click)="deleteMedicine(medicine.id)" class="text-red-600 hover:text-red-900">Delete</button>
-                </div>
-              </td>
-            </tr>
-            <tr *ngIf="medicines.length === 0">
-              <td colspan="6" class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-center">
-                No medicines found. Start by adding some stock.
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <div class="table-wrapper">
+      <table class="stock-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Pharmacy</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Expiry Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let medicine of medicines">
+            <td>
+              <div class="medicine-name-cell">
+                <span class="medicine-name">{{ medicine.name }}</span>
+                <span class="medicine-manufacturer">{{ medicine.manufacturer }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="category-badge">{{ medicine.category }}</span>
+            </td>
+            <td>
+              <span class="pharmacy-name">{{ getPharmacyName(medicine.pharmacyId) }}</span>
+            </td>
+            <td>
+              <span class="price">{{ medicine.price }}</span>
+            </td>
+            <td>
+              <span class="quantity-badge" [ngClass]="{
+                  'low': medicine.quantity < 10,
+                  'medium': medicine.quantity >= 10 && medicine.quantity < 50,
+                  'good': medicine.quantity >= 50
+                }">
+                {{ medicine.quantity }}
+              </span>
+            </td>
+            <td>
+              <span class="expiry-date">{{ medicine.expiryDate | date }}</span>
+            </td>
+            <td>
+              <div class="actions-cell">
+                <a [routerLink]="['/pharmacy/stock/edit', medicine.id]" class="action-btn edit-btn">
+                  Edit
+                </a>
+                <button (click)="deleteMedicine(medicine.id)" class="action-btn delete-btn">
+                  Delete
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="medicines.length === 0">
+            <td colspan="7">
+              <div class="empty-state">
+                <div class="empty-state-icon">📦</div>
+                <p class="empty-state-text">No medicines found</p>
+                <p class="empty-state-hint">Start by adding some stock to your pharmacy</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>

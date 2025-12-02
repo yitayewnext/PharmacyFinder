@@ -24,6 +24,7 @@ export interface User {
   approvalStatus: ApprovalStatusValue; // Can be number or string from backend
   licenseNumber?: string; // Health ministry license for pharmacy owners
   createdAt?: string; // Optional for backward compatibility
+  isActive?: boolean; // User account active status
 }
 
 export interface AuthResponse {

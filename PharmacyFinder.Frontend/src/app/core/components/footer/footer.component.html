@@ -1,0 +1,59 @@
+<footer class="footer">
+  <div class="footer-container">
+    <div class="footer-content">
+      <!-- Brand Section -->
+      <div class="footer-section">
+        <div class="footer-brand">
+          <h3>🏥 PharmacyFinder</h3>
+          <p>Your trusted platform for finding and managing pharmacy services</p>
+        </div>
+      </div>
+
+      <!-- Quick Links -->
+      <div class="footer-section">
+        <h4 class="footer-title">Quick Links</h4>
+        <ul class="footer-links">
+          <li><a routerLink="/" class="footer-link">Home</a></li>
+          <li *ngIf="!isAuthenticated()"><a routerLink="/login" class="footer-link">Sign In</a></li>
+          <li *ngIf="!isAuthenticated()"><a routerLink="/register" class="footer-link">Sign Up</a></li>
+          <li *ngIf="isAuthenticated()"><a routerLink="/home" class="footer-link">Dashboard</a></li>
+        </ul>
+      </div>
+
+      <!-- For Users -->
+      <div class="footer-section" *ngIf="!isAuthenticated()">
+        <h4 class="footer-title">For Users</h4>
+        <ul class="footer-links">
+          <li><a routerLink="/register" class="footer-link">Create Account</a></li>
+          <li><a routerLink="/login" class="footer-link">Sign In</a></li>
+          <li><a href="#" class="footer-link">Search Pharmacies</a></li>
+          <li><a href="#" class="footer-link">Find Medicines</a></li>
+        </ul>
+      </div>
+
+      <!-- Contact -->
+      <div class="footer-section">
+        <h4 class="footer-title">Contact</h4>
+        <ul class="footer-links">
+          <li><a href="mailto:support&#64;pharmacyfinder.com" class="footer-link">support&#64;pharmacyfinder.com</a></li>
+          <li><a href="tel:+1234567890" class="footer-link">+1 (234) 567-890</a></li>
+          <li class="footer-link">Monday - Friday: 9AM - 6PM</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Footer Bottom -->
+    <div class="footer-bottom">
+      <div class="footer-copyright">
+        <p>&copy; {{ currentYear }} PharmacyFinder. All rights reserved.</p>
+      </div>
+      <div class="footer-legal">
+        <a href="#" class="footer-link-small">Privacy Policy</a>
+        <span class="footer-separator">|</span>
+        <a href="#" class="footer-link-small">Terms of Service</a>
+        <span class="footer-separator">|</span>
+        <a href="#" class="footer-link-small">About Us</a>
+      </div>
+    </div>
+  </div>
+</footer>

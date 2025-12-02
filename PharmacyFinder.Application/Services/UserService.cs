@@ -29,8 +29,8 @@ namespace PharmacyFinder.Application.Services
 
         public async Task<List<UserDto>> GetAllUsersAsync()
         {
+            // Return all users including inactive for admin management
             var users = await _context.Users
-                .Where(u => u.IsActive)
                 .OrderByDescending(u => u.CreatedAt)
                 .ToListAsync();
 
@@ -39,8 +39,9 @@ namespace PharmacyFinder.Application.Services
 
         public async Task<UserDto?> GetUserByIdAsync(int id)
         {
+            // Allow getting inactive users for admin management
             var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Id == id && u.IsActive);
+                .FirstOrDefaultAsync(u => u.Id == id);
 
             return user == null ? null : MapToDto(user);
         }
@@ -109,6 +110,40 @@ namespace PharmacyFinder.Application.Services
             return true;
         }
 
+        public async Task<UserDto> ActivateUserAsync(int userId, int adminId)
+        {
+            var user = await _context.Users.FindAsync(userId);
+
+            if (user == null)
+            {
+                throw new ArgumentException("User not found");
+            }
+
+            user.IsActive = true;
+            user.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return MapToDto(user);
+        }
+
+        public async Task<UserDto> DeactivateUserAsync(int userId, int adminId)
+        {
+            var user = await _context.Users.FindAsync(userId);
+
+            if (user == null)
+            {
+                throw new ArgumentException("User not found");
+            }
+
+            user.IsActive = false;
+            user.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return MapToDto(user);
+        }
+
         private UserDto MapToDto(User user)
         {
             return new UserDto
@@ -120,7 +155,8 @@ namespace PharmacyFinder.Application.Services
                 Role = RoleHelper.StringToRole(user.Role),
                 ApprovalStatus = ApprovalStatusHelper.StringToApprovalStatus(user.ApprovalStatus),
                 LicenseNumber = user.LicenseNumber,
-                CreatedAt = user.CreatedAt
+                CreatedAt = user.CreatedAt,
+                IsActive = user.IsActive
             };
         }
     }

@@ -1,11 +1,11 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { pharmacyOwnerApprovalGuard } from './core/guards/pharmacy-owner-approval.guard';
 
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: '/home',
-    pathMatch: 'full'
+    loadComponent: () => import('./features/landing/landing.component').then(m => m.LandingComponent)
   },
   {
     path: 'login',
@@ -28,17 +28,17 @@ export const routes: Routes = [
   {
     path: 'pharmacy/stock',
     loadComponent: () => import('./features/pharmacy/stock-management/stock-list/stock-list.component').then(m => m.StockListComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, pharmacyOwnerApprovalGuard]
   },
   {
     path: 'pharmacy/stock/add',
     loadComponent: () => import('./features/pharmacy/stock-management/add-edit-medicine/add-edit-medicine.component').then(m => m.AddEditMedicineComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, pharmacyOwnerApprovalGuard]
   },
   {
     path: 'pharmacy/stock/edit/:id',
     loadComponent: () => import('./features/pharmacy/stock-management/add-edit-medicine/add-edit-medicine.component').then(m => m.AddEditMedicineComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, pharmacyOwnerApprovalGuard]
   },
   {
     path: 'admin/pharmacy-approval',

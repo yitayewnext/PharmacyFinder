@@ -59,8 +59,8 @@ namespace PharmacyFinder.API.Controllers
             return Ok(pharmacy);
         }
 
-        [HttpGet("my-pharmacy")]
-        public async Task<ActionResult<PharmacyDto>> GetMyPharmacy()
+        [HttpGet("my-pharmacies")]
+        public async Task<ActionResult<List<PharmacyDto>>> GetMyPharmacies()
         {
             var userId = GetCurrentUserId();
             if (userId == null)
@@ -68,12 +68,8 @@ namespace PharmacyFinder.API.Controllers
                 return Unauthorized();
             }
 
-            var pharmacy = await _pharmacyService.GetPharmacyByOwnerIdAsync(userId.Value);
-            if (pharmacy == null)
-            {
-                return NotFound();
-            }
-            return Ok(pharmacy);
+            var pharmacies = await _pharmacyService.GetPharmaciesByOwnerIdAsync(userId.Value);
+            return Ok(pharmacies);
         }
 
         [HttpGet("pending")]

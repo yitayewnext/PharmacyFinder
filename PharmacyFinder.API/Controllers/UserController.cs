@@ -69,6 +69,48 @@ namespace PharmacyFinder.API.Controllers
             }
         }
 
+        [HttpPut("{id}/activate")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<UserDto>> ActivateUser(int id)
+        {
+            var adminId = GetCurrentUserId();
+            if (adminId == null)
+            {
+                return Unauthorized();
+            }
+
+            try
+            {
+                var user = await _userService.ActivateUserAsync(id, adminId.Value);
+                return Ok(user);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpPut("{id}/deactivate")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<UserDto>> DeactivateUser(int id)
+        {
+            var adminId = GetCurrentUserId();
+            if (adminId == null)
+            {
+                return Unauthorized();
+            }
+
+            try
+            {
+                var user = await _userService.DeactivateUserAsync(id, adminId.Value);
+                return Ok(user);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<UserDto>> UpdateUser(int id, UpdateUserDto request)

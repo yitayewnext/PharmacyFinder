@@ -1,0 +1,364 @@
+<div class="user-management-container">
+  <div class="header">
+    <div class="header-content">
+      <div>
+        <h1>User Management</h1>
+        <p>View and manage all registered users</p>
+      </div>
+      <button class="btn btn-primary" (click)="openCreateUserModal()">
+        ➕ Create Admin
+      </button>
+    </div>
+  </div>
+
+  <!-- Search and Filter -->
+  <div class="controls-section card">
+    <div class="search-filter">
+      <input 
+        type="text" 
+        class="search-input" 
+        placeholder="Search users by name or email..."
+        [(ngModel)]="searchQuery"
+        (input)="applyFilters()"
+      />
+      <select 
+        class="filter-select" 
+        [(ngModel)]="statusFilter"
+        (change)="applyFilters()"
+      >
+        <option value="all">All Statuses</option>
+        <option value="1">Pending</option>
+        <option value="2">Approved</option>
+        <option value="3">Rejected</option>
+      </select>
+      <select 
+        class="filter-select" 
+        [(ngModel)]="roleFilter"
+        (change)="applyFilters()"
+      >
+        <option value="all">All Roles</option>
+        <option value="1">Customer</option>
+        <option value="2">Pharmacy Owner</option>
+        <option value="3">Admin</option>
+      </select>
+      <select 
+        class="filter-select" 
+        [(ngModel)]="activeFilter"
+        (change)="applyFilters()"
+      >
+        <option value="all">All Accounts</option>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+    </div>
+    <div class="stats-summary">
+      <span class="stat-item">Total: {{ allUsers.length }}</span>
+      <span class="stat-item">Pending: {{ getCountByStatus(1) }}</span>
+      <span class="stat-item">Approved: {{ getCountByStatus(2) }}</span>
+      <span class="stat-item">Rejected: {{ getCountByStatus(3) }}</span>
+      <span class="stat-item">Active: {{ getActiveCount() }}</span>
+      <span class="stat-item">Inactive: {{ getInactiveCount() }}</span>
+    </div>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-container">
+    <p>Loading users...</p>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-error">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+  </div>
+
+  <div *ngIf="!isLoading && filteredUsers.length === 0" class="empty-state">
+    <p>No users found matching your criteria.</p>
+  </div>
+
+  <!-- Users Table -->
+  <div *ngIf="!isLoading && filteredUsers.length > 0" class="users-table card">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Approval Status</th>
+          <th>Account Status</th>
+          <th>Registered</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of filteredUsers">
+          <td data-label="Name">
+            <div class="user-name-cell">
+              <strong>{{ user.firstName }} {{ user.lastName }}</strong>
+            </div>
+          </td>
+          <td data-label="Email">{{ user.email }}</td>
+          <td data-label="Role">
+            <span class="role-badge">{{ getRoleName(user.role) }}</span>
+          </td>
+          <td data-label="Approval Status">
+            <span class="status-badge" [ngClass]="getApprovalStatusClass(user.approvalStatus)">
+              {{ getApprovalStatusName(user.approvalStatus) }}
+            </span>
+          </td>
+          <td data-label="Account Status">
+            <span class="status-badge" [ngClass]="(user.isActive === true || user.isActive === undefined) ? 'status-active' : 'status-inactive'">
+              {{ (user.isActive === true || user.isActive === undefined) ? 'Active' : 'Inactive' }}
+            </span>
+          </td>
+          <td data-label="Registered">{{ formatDate(user.createdAt || '') }}</td>
+          <td data-label="Actions">
+            <div class="action-buttons">
+              <button 
+                *ngIf="isPending(user.approvalStatus)"
+                class="btn btn-sm btn-success" 
+                (click)="updateApproval(user.id, ApprovalStatus.Approved)"
+                title="Approve"
+                [disabled]="isProcessing"
+              >
+                ✅ Approve
+              </button>
+              <button 
+                *ngIf="isRejected(user.approvalStatus)"
+                class="btn btn-sm btn-success" 
+                (click)="updateApproval(user.id, ApprovalStatus.Approved)"
+                title="Approve"
+                [disabled]="isProcessing"
+              >
+                ✅ Approve
+              </button>
+              <button 
+                *ngIf="isPending(user.approvalStatus)"
+                class="btn btn-sm btn-danger" 
+                (click)="updateApproval(user.id, ApprovalStatus.Rejected)"
+                title="Reject"
+                [disabled]="isProcessing"
+              >
+                ❌ Reject
+              </button>
+              <button 
+                *ngIf="isApproved(user.approvalStatus)"
+                class="btn btn-sm btn-danger" 
+                (click)="updateApproval(user.id, ApprovalStatus.Rejected)"
+                title="Disapprove"
+                [disabled]="isProcessing"
+              >
+                ❌ Disapprove
+              </button>
+              <button 
+                class="btn btn-sm btn-secondary" 
+                (click)="viewUser(user)"
+                title="View Details"
+              >
+                👁️ View
+              </button>
+              <button 
+                class="btn btn-sm btn-primary" 
+                (click)="editUser(user)"
+                title="Edit User"
+              >
+                ✏️ Edit
+              </button>
+              <button 
+                *ngIf="user.isActive === true || user.isActive === undefined"
+                class="btn btn-sm btn-warning" 
+                (click)="deactivateUser(user.id, user.firstName + ' ' + user.lastName)"
+                title="Deactivate User"
+                [disabled]="isProcessing"
+              >
+                ⏸️ Deactivate
+              </button>
+              <button 
+                *ngIf="user.isActive === false"
+                class="btn btn-sm btn-success" 
+                (click)="activateUser(user.id, user.firstName + ' ' + user.lastName)"
+                title="Activate User"
+                [disabled]="isProcessing"
+              >
+                ▶️ Activate
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- View User Modal -->
+  <div *ngIf="selectedUser && !isEditing" class="modal-overlay" (click)="closeModal()">
+    <div class="modal-content card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>User Details</h2>
+        <button class="close-btn" (click)="closeModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="detail-section">
+          <h3>Personal Information</h3>
+          <div class="detail-item">
+            <span class="detail-label">Name:</span>
+            <span class="detail-value">{{ selectedUser.firstName }} {{ selectedUser.lastName }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Email:</span>
+            <span class="detail-value">{{ selectedUser.email }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Role:</span>
+            <span class="detail-value">{{ getRoleName(selectedUser.role) }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedUser.licenseNumber">
+            <span class="detail-label">License Number:</span>
+            <span class="detail-value">{{ selectedUser.licenseNumber }}</span>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>Account Status</h3>
+          <div class="detail-item">
+            <span class="detail-label">Approval Status:</span>
+            <span class="status-badge" [ngClass]="getApprovalStatusClass(selectedUser.approvalStatus)">
+              {{ getApprovalStatusName(selectedUser.approvalStatus) }}
+            </span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Account Status:</span>
+            <span class="status-badge" [ngClass]="(selectedUser.isActive === true || selectedUser.isActive === undefined) ? 'status-active' : 'status-inactive'">
+              {{ (selectedUser.isActive === true || selectedUser.isActive === undefined) ? 'Active' : 'Inactive' }}
+            </span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">User ID:</span>
+            <span class="detail-value">{{ selectedUser.id }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Registered:</span>
+            <span class="detail-value">{{ formatDate(selectedUser.createdAt || '') }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button *ngIf="isPending(selectedUser.approvalStatus)" class="btn btn-success" (click)="updateApproval(selectedUser.id, ApprovalStatus.Approved)" [disabled]="isProcessing">
+          Approve User
+        </button>
+        <button *ngIf="isRejected(selectedUser.approvalStatus)" class="btn btn-success" (click)="updateApproval(selectedUser.id, ApprovalStatus.Approved)" [disabled]="isProcessing">
+          Approve User
+        </button>
+        <button *ngIf="isPending(selectedUser.approvalStatus)" class="btn btn-danger" (click)="updateApproval(selectedUser.id, ApprovalStatus.Rejected)" [disabled]="isProcessing">
+          Reject User
+        </button>
+        <button *ngIf="isApproved(selectedUser.approvalStatus)" class="btn btn-danger" (click)="updateApproval(selectedUser.id, ApprovalStatus.Rejected)" [disabled]="isProcessing">
+          Disapprove User
+        </button>
+        <button *ngIf="selectedUser.isActive === true || selectedUser.isActive === undefined" class="btn btn-warning" (click)="deactivateUser(selectedUser.id, selectedUser.firstName + ' ' + selectedUser.lastName)" [disabled]="isProcessing">
+          Deactivate
+        </button>
+        <button *ngIf="selectedUser.isActive === false" class="btn btn-success" (click)="activateUser(selectedUser.id, selectedUser.firstName + ' ' + selectedUser.lastName)" [disabled]="isProcessing">
+          Activate
+        </button>
+        <button class="btn btn-primary" (click)="editUser(selectedUser)">Edit User</button>
+        <button class="btn btn-secondary" (click)="closeModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Admin User Modal -->
+  <div *ngIf="isCreating" class="modal-overlay" (click)="closeCreateModal()">
+    <div class="modal-content card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Create New Admin</h2>
+        <button class="close-btn" (click)="closeCreateModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <form [formGroup]="createForm" (ngSubmit)="createUser()">
+          <div class="form-section">
+            <h3>Admin Information</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="createFirstName" class="form-label">First Name *</label>
+                <input id="createFirstName" type="text" formControlName="firstName" class="form-input" />
+              </div>
+              <div class="form-group">
+                <label for="createLastName" class="form-label">Last Name *</label>
+                <input id="createLastName" type="text" formControlName="lastName" class="form-input" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="createEmail" class="form-label">Email *</label>
+              <input id="createEmail" type="email" formControlName="email" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label for="createPassword" class="form-label">Password *</label>
+              <input id="createPassword" type="password" formControlName="password" class="form-input" />
+              <small class="form-hint">Password must be at least 6 characters</small>
+            </div>
+            <div class="form-group">
+              <div class="role-info">
+                <span class="role-badge role-admin">Admin</span>
+                <small class="form-hint">This user will be created with Admin privileges</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" (click)="closeCreateModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary" [disabled]="createForm.invalid || isProcessing">Create Admin</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit User Modal -->
+  <div *ngIf="selectedUser && isEditing" class="modal-overlay" (click)="closeModal()">
+    <div class="modal-content card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Edit User: {{ selectedUser.firstName }} {{ selectedUser.lastName }}</h2>
+        <button class="close-btn" (click)="closeModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <form [formGroup]="editForm" (ngSubmit)="saveUser()">
+          <div class="form-section">
+            <h3>Personal Information</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="editFirstName" class="form-label">First Name *</label>
+                <input id="editFirstName" type="text" formControlName="firstName" class="form-input" />
+              </div>
+              <div class="form-group">
+                <label for="editLastName" class="form-label">Last Name *</label>
+                <input id="editLastName" type="text" formControlName="lastName" class="form-input" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="editEmail" class="form-label">Email *</label>
+              <input id="editEmail" type="email" formControlName="email" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label for="editRole" class="form-label">Role *</label>
+              <select id="editRole" formControlName="role" class="form-input">
+                <option [value]="UserRole.Customer">Customer</option>
+                <option [value]="UserRole.PharmacyOwner">Pharmacy Owner</option>
+                <option [value]="UserRole.Admin">Admin</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary" [disabled]="editForm.invalid || isProcessing">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

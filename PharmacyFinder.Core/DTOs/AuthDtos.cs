@@ -35,5 +35,6 @@ namespace PharmacyFinder.Core.DTOs
         public ApprovalStatus ApprovalStatus { get; set; }
         public string? LicenseNumber { get; set; }
         public DateTime CreatedAt { get; set; }
+        public bool IsActive { get; set; }
     }
 }

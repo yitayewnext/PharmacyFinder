@@ -81,17 +81,31 @@ namespace PharmacyFinder.Application.Services
                     LastName = user.LastName,
                     Role = RoleHelper.StringToRole(user.Role), // Convert string from database to enum
                     ApprovalStatus = ApprovalStatusHelper.StringToApprovalStatus(user.ApprovalStatus), // Convert string to enum
-                    LicenseNumber = user.LicenseNumber
+                    LicenseNumber = user.LicenseNumber,
+                    IsActive = user.IsActive
                 }
             };
         }
 
         public async Task<AuthResponseDto> LoginAsync(LoginRequestDto request)
         {
+            // First, check if user exists (regardless of IsActive status)
             var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Email == request.Email.ToLower() && u.IsActive);
+                .FirstOrDefaultAsync(u => u.Email == request.Email.ToLower());
 
-            if (user == null || !_passwordHasher.Verify(request.Password, user.PasswordHash))
+            if (user == null)
+            {
+                throw new UnauthorizedAccessException("Invalid email or password");
+            }
+
+            // Check if account is deactivated
+            if (!user.IsActive)
+            {
+                throw new UnauthorizedAccessException("Your account has been deactivated. Please contact the administrator.");
+            }
+
+            // Verify password
+            if (!_passwordHasher.Verify(request.Password, user.PasswordHash))
             {
                 throw new UnauthorizedAccessException("Invalid email or password");
             }
@@ -144,7 +158,8 @@ namespace PharmacyFinder.Application.Services
                     LastName = user.LastName,
                     Role = RoleHelper.StringToRole(user.Role), // Convert string from database to enum
                     ApprovalStatus = ApprovalStatusHelper.StringToApprovalStatus(user.ApprovalStatus), // Convert string to enum
-                    LicenseNumber = user.LicenseNumber
+                    LicenseNumber = user.LicenseNumber,
+                    IsActive = user.IsActive
                 }
             };
         }

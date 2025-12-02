@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { combineLatest } from 'rxjs';
 import { MedicineService } from '../../../../core/services/medicine.service';
 import { PharmacyService } from '../../../../core/services/pharmacy.service';
 import { CreateMedicine, UpdateMedicine } from '../../../../models/medicine.model';
@@ -9,7 +10,7 @@ import { CreateMedicine, UpdateMedicine } from '../../../../models/medicine.mode
 @Component({
     selector: 'app-add-edit-medicine',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, RouterModule],
+    imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule],
     templateUrl: './add-edit-medicine.component.html',
     styleUrls: ['./add-edit-medicine.component.css']
 })
@@ -17,6 +18,7 @@ export class AddEditMedicineComponent implements OnInit {
     medicineForm: FormGroup;
     isEditMode = false;
     medicineId: number | null = null;
+    pharmacies: any[] = [];
     pharmacyId: number | null = null;
     isLoading = false;
     error: string | null = null;
@@ -41,25 +43,50 @@ export class AddEditMedicineComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.pharmacyService.getMyPharmacy().subscribe({
-            next: (pharmacy) => {
-                if (pharmacy) {
-                    this.pharmacyId = pharmacy.id;
-                } else {
-                    this.error = 'Pharmacy not found. Please register a pharmacy first.';
-                }
-            },
-            error: (err) => {
-                this.error = 'Failed to load pharmacy details.';
-                console.error(err);
-            }
-        });
-
+        // Check if we're in edit mode first
         this.route.params.subscribe(params => {
             if (params['id']) {
                 this.isEditMode = true;
                 this.medicineId = +params['id'];
                 this.loadMedicine(this.medicineId);
+            }
+        });
+
+        // Load pharmacies and check query params
+        combineLatest([
+            this.pharmacyService.getMyPharmacies(),
+            this.route.queryParams
+        ]).subscribe({
+            next: ([pharmacies, queryParams]) => {
+                if (pharmacies && pharmacies.length > 0) {
+                    this.pharmacies = pharmacies;
+                    // If not in edit mode, check query params for pharmacy ID
+                    if (!this.isEditMode) {
+                        if (queryParams['pharmacyId']) {
+                            const queryPharmacyId = Number(queryParams['pharmacyId']);
+                            // Verify the pharmacy ID exists in user's pharmacies
+                            const pharmacy = pharmacies.find(p => p.id === queryPharmacyId);
+                            if (pharmacy) {
+                                this.pharmacyId = queryPharmacyId;
+                                console.log('Using pharmacy from query param:', this.pharmacyId);
+                            } else {
+                                // If invalid, default to first pharmacy
+                                this.pharmacyId = pharmacies[0].id;
+                                console.log('Invalid pharmacy ID in query, defaulting to first:', this.pharmacyId);
+                            }
+                        } else {
+                            // No query param, default to first pharmacy
+                            this.pharmacyId = pharmacies[0].id;
+                            console.log('No query param, defaulting to first pharmacy:', this.pharmacyId);
+                        }
+                    }
+                } else {
+                    this.error = 'No pharmacy found. Please register a pharmacy first.';
+                }
+            },
+            error: (err) => {
+                this.error = 'Failed to load pharmacy details.';
+                console.error(err);
             }
         });
     }
@@ -70,6 +97,9 @@ export class AddEditMedicineComponent implements OnInit {
             next: (medicine) => {
                 // Format date for input type="date"
                 const expiryDate = new Date(medicine.expiryDate).toISOString().split('T')[0];
+
+                // Set pharmacy ID from medicine
+                this.pharmacyId = medicine.pharmacyId;
 
                 this.medicineForm.patchValue({
                     name: medicine.name,

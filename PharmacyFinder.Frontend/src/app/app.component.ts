@@ -5,13 +5,30 @@ import { AuthService } from './core/services/auth.service';
 import { User, UserRole } from './models/user.model';
 import { getRoleName, getRoleEnum } from './core/utils/role.utils';
 import { filter } from 'rxjs/operators';
+import { FooterComponent } from './core/components/footer/footer.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink],
+  imports: [CommonModule, RouterOutlet, RouterLink, FooterComponent],
   template: `
     <div class="app-container">
+      <!-- Landing Page Header (for unauthenticated users) -->
+      <nav class="landing-navbar" *ngIf="!isAuthenticated && isLandingPage()">
+        <div class="nav-container">
+          <div class="nav-brand">
+            <a routerLink="/" class="brand-link">
+              <h1>🏥 PharmacyFinder</h1>
+            </a>
+          </div>
+          <div class="nav-menu">
+            <a routerLink="/login" class="nav-link">Sign In</a>
+            <a routerLink="/register" class="btn btn-primary btn-small">Get Started</a>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Authenticated Navbar -->
       <nav class="navbar" *ngIf="isAuthenticated">
         <div class="nav-container">
           <div class="nav-brand">
@@ -105,9 +122,10 @@ import { filter } from 'rxjs/operators';
           </div>
         </div>
       </nav>
-      <main class="main-content" [class.with-navbar]="isAuthenticated">
+      <main class="main-content" [class.with-navbar]="isAuthenticated" [class.no-padding]="!isAuthenticated && isLandingPage()">
         <router-outlet></router-outlet>
       </main>
+      <app-footer></app-footer>
     </div>
   `,
   styles: [`
@@ -115,6 +133,32 @@ import { filter } from 'rxjs/operators';
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+    }
+
+    .landing-navbar {
+      background-color: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .landing-navbar .nav-brand h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin: 0;
+    }
+
+    .landing-navbar .brand-link {
+      text-decoration: none;
+    }
+
+    .landing-navbar .btn-small {
+      padding: 0.625rem 1.5rem;
+      font-size: 0.875rem;
     }
 
     .navbar {
@@ -348,6 +392,25 @@ import { filter } from 'rxjs/operators';
       font-size: 1rem;
     }
 
+    .landing-navbar {
+      background-color: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand-link {
+      text-decoration: none;
+    }
+
+    .btn-small {
+      padding: 0.625rem 1.5rem;
+      font-size: 0.875rem;
+    }
+
     .main-content {
       flex: 1;
       padding: 2rem 1rem;
@@ -355,6 +418,10 @@ import { filter } from 'rxjs/operators';
 
     .main-content.with-navbar {
       padding-top: 2rem;
+    }
+
+    .main-content.no-padding {
+      padding: 0;
     }
 
     @media (max-width: 768px) {
@@ -432,6 +499,14 @@ import { filter } from 'rxjs/operators';
       .nav-brand h1 {
         font-size: 1.25rem;
       }
+
+      .landing-navbar .nav-menu {
+        gap: 1rem;
+      }
+
+      .landing-navbar .btn {
+        width: auto;
+      }
     }
   `]
 })
@@ -508,5 +583,12 @@ export class AppComponent implements OnInit {
   }
 
   getRoleName = getRoleName;
+
+  isLandingPage(): boolean {
+    return this.currentRoute === '/' || 
+           this.currentRoute === '' || 
+           this.currentRoute === '/login' || 
+           this.currentRoute === '/register';
+  }
 }
 

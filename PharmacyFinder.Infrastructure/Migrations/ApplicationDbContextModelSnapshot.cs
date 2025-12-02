@@ -167,8 +167,7 @@ namespace PharmacyFinder.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("LicenseNumber")
-                        .IsUnique();
+                    b.HasIndex("LicenseNumber");
 
                     b.HasIndex("OwnerId");
 

@@ -1,0 +1,125 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-header">
+      <h1>Create Account</h1>
+      <p>Join PharmacyFinder today</p>
+    </div>
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="auth-form">
+      <div *ngIf="errorMessage" class="alert alert-error">
+        {{ errorMessage }}
+      </div>
+
+      <div class="form-group">
+        <label for="firstName" class="form-label">First Name</label>
+        <input
+          id="firstName"
+          type="text"
+          formControlName="firstName"
+          class="form-input"
+          placeholder="Enter your first name"
+          [class.error]="isFieldInvalid('firstName')"
+        />
+        <div *ngIf="isFieldInvalid('firstName')" class="error-message">
+          First name is required
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="lastName" class="form-label">Last Name</label>
+        <input
+          id="lastName"
+          type="text"
+          formControlName="lastName"
+          class="form-input"
+          placeholder="Enter your last name"
+          [class.error]="isFieldInvalid('lastName')"
+        />
+        <div *ngIf="isFieldInvalid('lastName')" class="error-message">
+          Last name is required
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="email" class="form-label">Email Address</label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          class="form-input"
+          placeholder="Enter your email"
+          [class.error]="isFieldInvalid('email')"
+        />
+        <div *ngIf="isFieldInvalid('email')" class="error-message">
+          <span *ngIf="registerForm.get('email')?.errors?.['required']">Email is required</span>
+          <span *ngIf="registerForm.get('email')?.errors?.['email']">Please enter a valid email</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password" class="form-label">Password</label>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          class="form-input"
+          placeholder="Create a password"
+          [class.error]="isFieldInvalid('password')"
+        />
+        <div *ngIf="isFieldInvalid('password')" class="error-message">
+          <span *ngIf="registerForm.get('password')?.errors?.['required']">Password is required</span>
+          <span *ngIf="registerForm.get('password')?.errors?.['minlength']">Password must be at least 6 characters</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="role" class="form-label">Account Type</label>
+        <select
+          id="role"
+          formControlName="role"
+          class="form-select"
+          [class.error]="isFieldInvalid('role')"
+          (change)="onRoleChange()"
+        >
+          <option [value]="UserRole.Customer">Customer</option>
+          <option [value]="UserRole.PharmacyOwner">Pharmacy Owner</option>
+        </select>
+        <div *ngIf="isFieldInvalid('role')" class="error-message">
+          Please select an account type
+        </div>
+      </div>
+
+      <div class="form-group" *ngIf="isPharmacyOwner()">
+        <label for="licenseNumber" class="form-label">Health Ministry License Number *</label>
+        <input
+          id="licenseNumber"
+          type="text"
+          formControlName="licenseNumber"
+          class="form-input"
+          placeholder="Enter your health ministry license number"
+          [class.error]="isFieldInvalid('licenseNumber')"
+        />
+        <div *ngIf="isFieldInvalid('licenseNumber')" class="error-message">
+          License number is required for pharmacy owners
+        </div>
+        <small class="form-hint">This license must be approved by the health ministry</small>
+      </div>
+
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="registerForm.invalid || isLoading"
+        style="width: 100%; margin-top: 0.5rem;"
+      >
+        <span *ngIf="isLoading" class="loading"></span>
+        <span *ngIf="!isLoading">Create Account</span>
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      <p>Already have an account? <a routerLink="/login" class="link">Sign in</a></p>
+    </div>
+  </div>
+</div>
+
+

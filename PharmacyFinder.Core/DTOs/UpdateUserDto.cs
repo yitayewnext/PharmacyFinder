@@ -13,3 +13,9 @@ namespace PharmacyFinder.Core.DTOs
 
 
 
+
+
+
+
+
+

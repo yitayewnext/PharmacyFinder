@@ -1,0 +1,356 @@
+<!-- Customer Landing Page -->
+<div *ngIf="isCustomer()" class="home-container">
+  <div class="hero-section">
+    <div class="hero-content">
+      <h1 class="hero-title">Find Your Nearest Pharmacy</h1>
+      <p class="hero-subtitle">Search for pharmacies, compare prices, and get the medicines you need</p>
+      <div class="search-box">
+        <input 
+          type="text" 
+          class="search-input" 
+          placeholder="Search for pharmacies or medicines..."
+          [(ngModel)]="searchQuery"
+        />
+        <button class="btn btn-primary search-btn">
+          <span>🔍</span> Search
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="features-section">
+    <h2 class="section-title">What You Can Do</h2>
+    <div class="features-grid">
+      <div class="feature-card card">
+        <div class="feature-icon">🔍</div>
+        <h3>Search Pharmacies</h3>
+        <p>Find pharmacies near you with our advanced search</p>
+        <button class="btn btn-outline">Explore</button>
+      </div>
+      <div class="feature-card card">
+        <div class="feature-icon">💊</div>
+        <h3>Find Medicines</h3>
+        <p>Search for specific medicines and compare prices</p>
+        <button class="btn btn-outline">Search</button>
+      </div>
+      <div class="feature-card card">
+        <div class="feature-icon">📍</div>
+        <h3>Get Directions</h3>
+        <p>Get directions to the nearest pharmacy</p>
+        <button class="btn btn-outline">Find Route</button>
+      </div>
+      <div class="feature-card card">
+        <div class="feature-icon">⭐</div>
+        <h3>Read Reviews</h3>
+        <p>See what others say about pharmacies</p>
+        <button class="btn btn-outline">View Reviews</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-actions-section">
+    <h2 class="section-title">Quick Actions</h2>
+    <div class="actions-grid">
+      <button class="action-card card">
+        <span class="action-icon">🏥</span>
+        <span class="action-text">Browse All Pharmacies</span>
+        <span class="action-arrow">→</span>
+      </button>
+      <button class="action-card card">
+        <span class="action-icon">💉</span>
+        <span class="action-text">Find Vaccines</span>
+        <span class="action-arrow">→</span>
+      </button>
+      <button class="action-card card">
+        <span class="action-icon">📋</span>
+        <span class="action-text">Prescription Services</span>
+        <span class="action-arrow">→</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Pharmacy Owner Landing Page -->
+<div *ngIf="isPharmacyOwner()" class="home-container">
+  <!-- Approval Pending Message -->
+  <div *ngIf="showApprovalPendingMessage || !isPharmacyOwnerApproved()" class="alert alert-warning">
+    <div class="alert-content">
+      <div class="alert-icon">⏳</div>
+      <div class="alert-text">
+        <strong>Account Pending Approval</strong>
+        <p>Your pharmacy owner account is pending admin approval. You cannot perform any actions until your account is approved. Please wait for an administrator to review and approve your account.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="welcome-banner card">
+    <div class="welcome-content">
+      <h1>Welcome back, {{ currentUser?.firstName }}!</h1>
+      <p>Manage your pharmacy business from here</p>
+    </div>
+  </div>
+
+  <!-- Pharmacy Status Cards -->
+  <div *ngFor="let pharmacy of myPharmacies" class="pharmacy-status-card card">
+    <div class="status-header">
+      <div>
+        <h2>{{ pharmacy.name }}</h2>
+        <p class="pharmacy-address">{{ pharmacy.address }}, {{ pharmacy.city }}</p>
+      </div>
+      <div class="status-badge" [ngClass]="getApprovalStatusClass(pharmacy.approvalStatus)">
+        {{ getApprovalStatusName(pharmacy.approvalStatus) }}
+      </div>
+    </div>
+    <div class="pharmacy-details-grid">
+      <div class="detail-item">
+        <span class="detail-label">Email</span>
+        <span class="detail-value">{{ pharmacy.email }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Phone</span>
+        <span class="detail-value">{{ pharmacy.phoneNumber }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">License</span>
+        <span class="detail-value">{{ pharmacy.licenseNumber }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Registered</span>
+        <span class="detail-value">{{ formatDate(pharmacy.createdAt) }}</span>
+      </div>
+    </div>
+    <div class="pharmacy-actions">
+      <button class="btn btn-primary" routerLink="/pharmacy/register">Edit Pharmacy</button>
+      <button class="btn btn-outline">View Details</button>
+    </div>
+  </div>
+
+  <!-- Register Pharmacy Card (if no pharmacy) -->
+  <div *ngIf="myPharmacies.length === 0 && !isLoadingPharmacy" class="register-prompt-card card">
+    <div class="prompt-content">
+      <div class="prompt-icon">🏥</div>
+      <h2>Register Your Pharmacy</h2>
+      <p>Get started by registering your pharmacy business. Once approved, customers will be able to find you.</p>
+      <button class="btn btn-primary" routerLink="/pharmacy/register">Register Now</button>
+    </div>
+  </div>
+
+  <!-- Register Another Pharmacy Button -->
+  <div *ngIf="myPharmacies.length > 0" class="register-another-container" style="margin-bottom: 2rem; text-align: center;">
+    <button class="btn btn-outline" routerLink="/pharmacy/register">
+      <span style="margin-right: 0.5rem;">+</span> Register Another Pharmacy
+    </button>
+  </div>
+
+  <!-- Quick Stats -->
+  <div class="stats-section">
+    <h2 class="section-title">Quick Stats</h2>
+    <div class="stats-grid">
+      <div class="stat-card card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-content">
+          <div class="stat-value">-</div>
+          <div class="stat-label">Total Customers</div>
+        </div>
+      </div>
+      <div class="stat-card card">
+        <div class="stat-icon">📦</div>
+        <div class="stat-content">
+          <div class="stat-value">-</div>
+          <div class="stat-label">Orders Today</div>
+        </div>
+      </div>
+      <div class="stat-card card">
+        <div class="stat-icon">⭐</div>
+        <div class="stat-content">
+          <div class="stat-value">-</div>
+          <div class="stat-label">Average Rating</div>
+        </div>
+      </div>
+      <div class="stat-card card">
+        <div class="stat-icon">💰</div>
+        <div class="stat-content">
+          <div class="stat-value">-</div>
+          <div class="stat-label">Revenue</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="quick-actions-section" *ngIf="isPharmacyOwnerApproved()">
+    <h2 class="section-title">Quick Actions</h2>
+    <div class="actions-grid">
+      <button class="action-card card" routerLink="/pharmacy/register">
+        <span class="action-icon">✏️</span>
+        <span class="action-text">Edit Pharmacy Info</span>
+        <span class="action-arrow">→</span>
+      </button>
+      <button class="action-card card" routerLink="/pharmacy/stock">
+        <span class="action-icon">📦</span>
+        <span class="action-text">Manage Inventory</span>
+        <span class="action-arrow">→</span>
+      </button>
+      <button class="action-card card">
+        <span class="action-icon">📊</span>
+        <span class="action-text">View Analytics</span>
+        <span class="action-arrow">→</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Admin Landing Page -->
+<div *ngIf="isAdmin()" class="home-container">
+  <div class="welcome-banner card">
+    <div class="welcome-content">
+      <h1>Admin Dashboard</h1>
+      <p>Manage the PharmacyFinder platform</p>
+    </div>
+  </div>
+
+  <!-- Stats Overview -->
+  <div class="stats-section">
+    <h2 class="section-title">Platform Overview</h2>
+    <div class="stats-grid">
+      <div class="stat-card card clickable" (click)="navigateToUserManagement()" title="View all users">
+        <div class="stat-icon">👥</div>
+        <div class="stat-content">
+          <div class="stat-value">{{ totalUsers }}</div>
+          <div class="stat-label">Total Users</div>
+        </div>
+        <div class="stat-arrow">→</div>
+      </div>
+      <div class="stat-card card clickable" (click)="navigateToPharmacyManagement()" title="View all pharmacies">
+        <div class="stat-icon">🏥</div>
+        <div class="stat-content">
+          <div class="stat-value">{{ totalPharmacies }}</div>
+          <div class="stat-label">Total Pharmacies</div>
+        </div>
+        <div class="stat-arrow">→</div>
+      </div>
+      <div class="stat-card card highlight clickable" (click)="navigateToPendingApprovals()" title="View pending approvals">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-content">
+          <div class="stat-value">{{ pendingPharmaciesCount + pendingUsersCount }}</div>
+          <div class="stat-label">Pending Approvals</div>
+        </div>
+        <div class="stat-arrow">→</div>
+      </div>
+      <div class="stat-card card clickable" (click)="navigateToPharmacyManagement('approved')" title="View approved pharmacies">
+        <div class="stat-icon">✅</div>
+        <div class="stat-content">
+          <div class="stat-value">{{ approvedPharmaciesCount }}</div>
+          <div class="stat-label">Approved Pharmacies</div>
+        </div>
+        <div class="stat-arrow">→</div>
+      </div>
+      <div class="stat-card card clickable" (click)="navigateToUserApproval()" title="View pending user approvals">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-content">
+          <div class="stat-value">{{ pendingUsersCount }}</div>
+          <div class="stat-label">Pending User Approvals</div>
+        </div>
+        <div class="stat-arrow">→</div>
+      </div>
+      <div class="stat-card card clickable" (click)="navigateToUserManagement('approved')" title="View approved users">
+        <div class="stat-icon">✅</div>
+        <div class="stat-content">
+          <div class="stat-value">{{ approvedUsersCount }}</div>
+          <div class="stat-label">Approved Users</div>
+        </div>
+        <div class="stat-arrow">→</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pending Approvals -->
+  <div *ngIf="pendingPharmacies.length > 0" class="pending-section">
+    <div class="section-header">
+      <h2 class="section-title">Pending Pharmacy Approvals</h2>
+      <button class="btn btn-primary" routerLink="/admin/pharmacy-approval">View All</button>
+    </div>
+    <div class="pharmacies-list">
+      <div *ngFor="let pharmacy of pendingPharmacies.slice(0, 3)" class="pharmacy-item card clickable" (click)="navigateToPharmacyApproval()">
+        <div class="pharmacy-item-header">
+          <div>
+            <h3>{{ pharmacy.name }}</h3>
+            <p>{{ pharmacy.city }}, {{ pharmacy.state }}</p>
+          </div>
+          <div class="status-badge pending">Pending</div>
+        </div>
+        <div class="pharmacy-item-details">
+          <span>Owner: {{ pharmacy.ownerName }}</span>
+          <span>License: {{ pharmacy.licenseNumber }}</span>
+        </div>
+        <button class="btn btn-primary btn-sm" routerLink="/admin/pharmacy-approval" (click)="$event.stopPropagation()">Review</button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="pendingUsers.length > 0" class="pending-section">
+    <div class="section-header">
+      <h2 class="section-title">Pending User Approvals</h2>
+      <button class="btn btn-primary" routerLink="/admin/user-approval">View All</button>
+    </div>
+    <div class="users-list">
+      <div *ngFor="let user of pendingUsers.slice(0, 3)" class="user-item card clickable" (click)="navigateToUserApproval()">
+        <div class="user-item-header">
+          <div>
+            <h3>{{ user.firstName }} {{ user.lastName }}</h3>
+            <p>{{ user.email }}</p>
+          </div>
+          <div class="status-badge pending">Pending</div>
+        </div>
+        <div class="user-item-details">
+          <span>Role: {{ getRoleName(user.role) }}</span>
+        </div>
+        <button class="btn btn-primary btn-sm" routerLink="/admin/user-approval" (click)="$event.stopPropagation()">Review</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="quick-actions-section">
+    <h2 class="section-title">Quick Actions</h2>
+    <div class="actions-grid">
+      <button class="action-card card" routerLink="/admin/user-approval">
+        <span class="action-icon">👤</span>
+        <span class="action-text">Review User Approvals</span>
+        <span class="action-arrow">→</span>
+      </button>
+      <button class="action-card card" routerLink="/admin/pharmacy-approval">
+        <span class="action-icon">✅</span>
+        <span class="action-text">Review Pharmacy Approvals</span>
+        <span class="action-arrow">→</span>
+      </button>
+      <button class="action-card card" routerLink="/admin/pharmacy-management">
+        <span class="action-icon">🏥</span>
+        <span class="action-text">Manage Pharmacies</span>
+        <span class="action-arrow">→</span>
+      </button>
+      <button class="action-card card" routerLink="/admin/user-management">
+        <span class="action-icon">👥</span>
+        <span class="action-text">Manage Users</span>
+        <span class="action-arrow">→</span>
+      </button>
+      <button class="action-card card">
+        <span class="action-icon">📊</span>
+        <span class="action-text">View Reports</span>
+        <span class="action-arrow">→</span>
+      </button>
+      <button class="action-card card">
+        <span class="action-icon">⚙️</span>
+        <span class="action-text">System Settings</span>
+        <span class="action-arrow">→</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div *ngIf="isLoadingPharmacy" class="loading-container">
+  <p>Loading...</p>
+</div>
+
+

@@ -6,7 +6,7 @@ namespace PharmacyFinder.Application.Interfaces
     {
         Task<PharmacyDto> RegisterPharmacyAsync(RegisterPharmacyDto request, int ownerId);
         Task<PharmacyDto?> GetPharmacyByIdAsync(int id);
-        Task<PharmacyDto?> GetPharmacyByOwnerIdAsync(int ownerId);
+        Task<List<PharmacyDto>> GetPharmaciesByOwnerIdAsync(int ownerId);
         Task<List<PharmacyDto>> GetPendingPharmaciesAsync();
         Task<List<PharmacyDto>> GetAllPharmaciesAsync();
         Task<PharmacyDto> UpdatePharmacyApprovalAsync(int pharmacyId, UpdatePharmacyApprovalDto request, int adminId);

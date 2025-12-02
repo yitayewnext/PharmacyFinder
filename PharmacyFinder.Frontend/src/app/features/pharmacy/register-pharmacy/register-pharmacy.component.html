@@ -1,0 +1,266 @@
+<div class="register-pharmacy-container">
+  <div class="register-pharmacy-card card">
+    <div class="header">
+      <h1>Register Your Pharmacy</h1>
+      <p>Fill in the details to register your pharmacy business</p>
+    </div>
+
+    <form [formGroup]="pharmacyForm" (ngSubmit)="onSubmit()" class="pharmacy-form">
+      <div *ngIf="errorMessage" class="alert alert-error">
+        {{ errorMessage }}
+      </div>
+
+      <div *ngIf="successMessage" class="alert alert-success">
+        {{ successMessage }}
+      </div>
+
+      <!-- Basic Information -->
+      <div class="form-section">
+        <h2>Basic Information</h2>
+        
+        <div class="form-group">
+          <label for="name" class="form-label">Pharmacy Name *</label>
+          <input
+            id="name"
+            type="text"
+            formControlName="name"
+            class="form-input"
+            placeholder="Enter pharmacy name"
+            [class.error]="isFieldInvalid('name')"
+          />
+          <div *ngIf="isFieldInvalid('name')" class="error-message">
+            Pharmacy name is required
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="ownerLicense" class="form-label">Health Ministry License Number</label>
+          <input
+            id="ownerLicense"
+            type="text"
+            [value]="getOwnerLicenseNumber()"
+            class="form-input"
+            readonly
+            disabled
+            style="background-color: #f5f5f5; cursor: not-allowed;"
+          />
+          <small class="form-hint">This license is inherited from your pharmacy owner account</small>
+        </div>
+
+        <div class="form-group">
+          <label for="businessLicense" class="form-label">Pharmacy Shop Business License *</label>
+          <input
+            id="businessLicense"
+            type="text"
+            formControlName="businessLicense"
+            class="form-input"
+            placeholder="Enter pharmacy shop business license number"
+            [class.error]="isFieldInvalid('businessLicense')"
+          />
+          <div *ngIf="isFieldInvalid('businessLicense')" class="error-message">
+            Business license number is required
+          </div>
+          <small class="form-hint">This is the business license for your pharmacy shop</small>
+        </div>
+      </div>
+
+      <!-- Contact Information -->
+      <div class="form-section">
+        <h2>Contact Information</h2>
+        
+        <div class="form-group">
+          <label for="email" class="form-label">Email *</label>
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            class="form-input"
+            placeholder="Enter pharmacy email"
+            [class.error]="isFieldInvalid('email')"
+          />
+          <div *ngIf="isFieldInvalid('email')" class="error-message">
+            <span *ngIf="pharmacyForm.get('email')?.errors?.['required']">Email is required</span>
+            <span *ngIf="pharmacyForm.get('email')?.errors?.['email']">Please enter a valid email</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="phoneNumber" class="form-label">Phone Number *</label>
+          <input
+            id="phoneNumber"
+            type="tel"
+            formControlName="phoneNumber"
+            class="form-input"
+            placeholder="Enter phone number"
+            [class.error]="isFieldInvalid('phoneNumber')"
+          />
+          <div *ngIf="isFieldInvalid('phoneNumber')" class="error-message">
+            Phone number is required
+          </div>
+        </div>
+      </div>
+
+      <!-- Address Information -->
+      <div class="form-section">
+        <h2>Address Information</h2>
+        
+        <div class="form-group">
+          <label for="address" class="form-label">Street Address *</label>
+          <input
+            id="address"
+            type="text"
+            formControlName="address"
+            class="form-input"
+            placeholder="Enter street address"
+            [class.error]="isFieldInvalid('address')"
+          />
+          <div *ngIf="isFieldInvalid('address')" class="error-message">
+            Address is required
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="city" class="form-label">City *</label>
+            <input
+              id="city"
+              type="text"
+              formControlName="city"
+              class="form-input"
+              placeholder="Enter city"
+              [class.error]="isFieldInvalid('city')"
+            />
+            <div *ngIf="isFieldInvalid('city')" class="error-message">
+              City is required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="state" class="form-label">State *</label>
+            <input
+              id="state"
+              type="text"
+              formControlName="state"
+              class="form-input"
+              placeholder="Enter state"
+              [class.error]="isFieldInvalid('state')"
+            />
+            <div *ngIf="isFieldInvalid('state')" class="error-message">
+              State is required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="zipCode" class="form-label">Zip Code *</label>
+            <input
+              id="zipCode"
+              type="text"
+              formControlName="zipCode"
+              class="form-input"
+              placeholder="Enter zip code"
+              [class.error]="isFieldInvalid('zipCode')"
+            />
+            <div *ngIf="isFieldInvalid('zipCode')" class="error-message">
+              Zip code is required
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="latitude" class="form-label">Latitude *</label>
+            <input
+              id="latitude"
+              type="number"
+              step="any"
+              formControlName="latitude"
+              class="form-input"
+              placeholder="Enter latitude"
+              [class.error]="isFieldInvalid('latitude')"
+            />
+            <div *ngIf="isFieldInvalid('latitude')" class="error-message">
+              Latitude is required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="longitude" class="form-label">Longitude *</label>
+            <input
+              id="longitude"
+              type="number"
+              step="any"
+              formControlName="longitude"
+              class="form-input"
+              placeholder="Enter longitude"
+              [class.error]="isFieldInvalid('longitude')"
+            />
+            <div *ngIf="isFieldInvalid('longitude')" class="error-message">
+              Longitude is required
+            </div>
+          </div>
+        </div>
+
+        <div class="form-help">
+          <p>💡 Tip: You can get coordinates from Google Maps by right-clicking on a location</p>
+        </div>
+      </div>
+
+      <!-- Operating Hours -->
+      <div class="form-section">
+        <h2>Operating Hours</h2>
+        <p class="section-description">Set the operating hours for each day of the week</p>
+        
+        <div class="operating-hours" formGroupName="operatingHours">
+          <div *ngFor="let day of days" class="day-hours">
+            <div class="day-header">
+              <label class="day-label">
+                <input
+                  type="checkbox"
+                  [formControlName]="day.key + 'IsOpen'"
+                  class="day-checkbox"
+                />
+                <span class="day-name">{{ day.name }}</span>
+              </label>
+            </div>
+            <div *ngIf="pharmacyForm.get('operatingHours.' + day.key + 'IsOpen')?.value" class="day-times">
+              <input
+                type="time"
+                [formControlName]="day.key + 'OpenTime'"
+                class="time-input"
+                placeholder="Open time"
+              />
+              <span class="time-separator">to</span>
+              <input
+                type="time"
+                [formControlName]="day.key + 'CloseTime'"
+                class="time-input"
+                placeholder="Close time"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button
+          type="button"
+          class="btn btn-outline"
+          (click)="goBack()"
+          [disabled]="isLoading"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="pharmacyForm.invalid || isLoading"
+        >
+          <span *ngIf="isLoading" class="loading"></span>
+          <span *ngIf="!isLoading">Register Pharmacy</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+

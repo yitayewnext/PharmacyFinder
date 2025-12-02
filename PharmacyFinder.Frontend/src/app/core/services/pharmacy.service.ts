@@ -19,8 +19,8 @@ export class PharmacyService {
     return this.http.get<Pharmacy>(`${this.apiUrl}/api/pharmacy/${id}`);
   }
 
-  getMyPharmacy(): Observable<Pharmacy> {
-    return this.http.get<Pharmacy>(`${this.apiUrl}/api/pharmacy/my-pharmacy`);
+  getMyPharmacies(): Observable<Pharmacy[]> {
+    return this.http.get<Pharmacy[]>(`${this.apiUrl}/api/pharmacy/my-pharmacies`);
   }
 
   getPendingPharmacies(): Observable<Pharmacy[]> {

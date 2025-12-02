@@ -1,0 +1,76 @@
+<div class="user-approval-container">
+  <div class="header">
+    <h1>User Approvals</h1>
+    <p>Review and approve user registrations</p>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-container">
+    <p>Loading users...</p>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-error">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="!isLoading && users.length === 0" class="empty-state">
+    <p>No pending users to review.</p>
+  </div>
+
+  <div *ngIf="!isLoading && users.length > 0" class="users-list">
+    <div *ngFor="let user of users" class="user-card card">
+      <div class="user-header">
+        <div class="user-avatar">{{ getInitials(user) }}</div>
+        <div class="user-info">
+          <h2>{{ user.firstName }} {{ user.lastName }}</h2>
+          <p class="user-email">{{ user.email }}</p>
+          <div class="user-meta">
+            <span class="role-badge" [ngClass]="'role-' + getRoleName(user.role).toLowerCase().replace(' ', '-')">
+              {{ getRoleName(user.role) }}
+            </span>
+            <span class="status-badge" [ngClass]="getApprovalStatusClass(user.approvalStatus)">
+              {{ getApprovalStatusName(user.approvalStatus) }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="user-details">
+        <div class="detail-item">
+          <span class="detail-label">User ID:</span>
+          <span class="detail-value">#{{ user.id }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Email:</span>
+          <span class="detail-value">{{ user.email }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Name:</span>
+          <span class="detail-value">{{ user.firstName }} {{ user.lastName }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Role:</span>
+          <span class="detail-value">{{ getRoleName(user.role) }}</span>
+        </div>
+      </div>
+
+      <div *ngIf="user.approvalStatus === 1" class="user-actions">
+        <button
+          class="btn btn-danger"
+          (click)="updateApproval(user.id, 3)"
+          [disabled]="isProcessing"
+        >
+          Reject
+        </button>
+        <button
+          class="btn btn-success"
+          (click)="updateApproval(user.id, 2)"
+          [disabled]="isProcessing"
+        >
+          Approve
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+

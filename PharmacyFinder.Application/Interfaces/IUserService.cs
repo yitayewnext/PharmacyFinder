@@ -10,6 +10,8 @@ namespace PharmacyFinder.Application.Interfaces
         Task<UserDto> UpdateUserApprovalAsync(int userId, UpdateUserApprovalDto request, int adminId);
         Task<UserDto> UpdateUserAsync(int userId, UpdateUserDto request, int adminId);
         Task<bool> DeleteUserAsync(int userId, int adminId);
+        Task<UserDto> ActivateUserAsync(int userId, int adminId);
+        Task<UserDto> DeactivateUserAsync(int userId, int adminId);
     }
 }
 

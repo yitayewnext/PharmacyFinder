@@ -1,8 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, tap } from 'rxjs';
-import { AuthResponse, LoginRequest, RegisterRequest, User } from '../../models/user.model';
+import { Observable, BehaviorSubject, tap, map } from 'rxjs';
+import { AuthResponse, LoginRequest, RegisterRequest, User, UserRole, ApprovalStatus } from '../../models/user.model';
 import { environment } from '../../../environments/environment';
+import { getRoleEnum } from '../utils/role.utils';
+import { getApprovalStatusEnum } from '../utils/approval-status.utils';
 
 @Injectable({
   providedIn: 'root'
@@ -29,10 +31,18 @@ export class AuthService {
       );
   }
 
-  register(data: RegisterRequest): Observable<AuthResponse> {
+  register(data: RegisterRequest): Observable<void> {
+    // Clear any existing auth state before making the request
+    this.logout();
+    
     return this.http.post<AuthResponse>(`${this.apiUrl}/api/auth/register`, data)
       .pipe(
-        tap(response => this.handleAuthResponse(response))
+        tap(() => {
+          // Explicitly ensure no tokens are stored - clear any auth state again after response
+          this.logout();
+        }),
+        // Convert to void to ignore the response content
+        map(() => void 0)
       );
   }
 
@@ -63,6 +73,37 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 
+  /**
+   * Checks if the current user is a pharmacy owner
+   */
+  isPharmacyOwner(): boolean {
+    const user = this.getCurrentUser();
+    if (!user) return false;
+    
+    const role = getRoleEnum(user.role);
+    return role === UserRole.PharmacyOwner;
+  }
+
+  /**
+   * Checks if the current pharmacy owner user is approved
+   * Returns true if not a pharmacy owner, false if pharmacy owner but not approved
+   */
+  isPharmacyOwnerApproved(): boolean {
+    const user = this.getCurrentUser();
+    if (!user) return false;
+
+    const role = getRoleEnum(user.role);
+    
+    // If not a pharmacy owner, return true (no approval needed)
+    if (role !== UserRole.PharmacyOwner) {
+      return true;
+    }
+
+    // Check approval status
+    const approvalStatus = getApprovalStatusEnum(user.approvalStatus);
+    return approvalStatus === ApprovalStatus.Approved;
+  }
+
   private handleAuthResponse(response: AuthResponse): void {
     localStorage.setItem('token', response.token);
     localStorage.setItem('expiresAt', response.expiresAt);
@@ -89,6 +130,7 @@ export class AuthService {
     return new Date() >= expiryDate;
   }
 }
+
 
 
 

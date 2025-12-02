@@ -1,0 +1,346 @@
+<div class="pharmacy-management-container">
+  <div class="header">
+    <h1>Pharmacy Management</h1>
+    <p>View and manage all registered pharmacies</p>
+  </div>
+
+  <!-- Search and Filter -->
+  <div class="controls-section card">
+    <div class="search-filter">
+      <input 
+        type="text" 
+        class="search-input" 
+        placeholder="Search pharmacies by name, city, or license..."
+        [(ngModel)]="searchQuery"
+        (input)="applyFilters()"
+      />
+      <select 
+        class="filter-select" 
+        [(ngModel)]="statusFilter"
+        (change)="applyFilters()"
+      >
+        <option value="all">All Statuses</option>
+        <option value="1">Pending</option>
+        <option value="2">Approved</option>
+        <option value="3">Rejected</option>
+      </select>
+    </div>
+    <div class="stats-summary">
+      <span class="stat-item">Total: {{ allPharmacies.length }}</span>
+      <span class="stat-item">Pending: {{ getCountByStatus(1) }}</span>
+      <span class="stat-item">Approved: {{ getCountByStatus(2) }}</span>
+      <span class="stat-item">Rejected: {{ getCountByStatus(3) }}</span>
+    </div>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-container">
+    <p>Loading pharmacies...</p>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-error">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+  </div>
+
+  <div *ngIf="!isLoading && filteredPharmacies.length === 0" class="empty-state">
+    <p>No pharmacies found matching your criteria.</p>
+  </div>
+
+  <!-- Pharmacies Table -->
+  <div *ngIf="!isLoading && filteredPharmacies.length > 0" class="pharmacies-table card">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Location</th>
+          <th>Owner</th>
+          <th>License</th>
+          <th>Status</th>
+          <th>Registered</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let pharmacy of filteredPharmacies">
+          <td data-label="Name">
+            <div class="pharmacy-name-cell">
+              <strong>{{ pharmacy.name }}</strong>
+              <span class="pharmacy-email">{{ pharmacy.email }}</span>
+            </div>
+          </td>
+          <td data-label="Location">
+            <div class="location-cell">
+              <div>{{ pharmacy.city }}, {{ pharmacy.state }}</div>
+              <div class="location-detail">{{ pharmacy.address }}</div>
+            </div>
+          </td>
+          <td data-label="Owner">{{ pharmacy.ownerName || 'N/A' }}</td>
+          <td data-label="License">{{ pharmacy.licenseNumber }}</td>
+          <td data-label="Status">
+            <span class="status-badge" [ngClass]="getApprovalStatusClass(pharmacy.approvalStatus)">
+              {{ getApprovalStatusName(pharmacy.approvalStatus) }}
+            </span>
+          </td>
+          <td data-label="Registered">{{ formatDate(pharmacy.createdAt) }}</td>
+          <td data-label="Actions">
+            <div class="action-buttons">
+              <button 
+                *ngIf="isPending(pharmacy.approvalStatus)"
+                class="btn btn-sm btn-success" 
+                (click)="updateApproval(pharmacy.id, ApprovalStatus.Approved)"
+                title="Approve"
+                [disabled]="isProcessing"
+              >
+                ✅ Approve
+              </button>
+              <button 
+                *ngIf="isRejected(pharmacy.approvalStatus)"
+                class="btn btn-sm btn-success" 
+                (click)="updateApproval(pharmacy.id, ApprovalStatus.Approved)"
+                title="Approve"
+                [disabled]="isProcessing"
+              >
+                ✅ Approve
+              </button>
+              <button 
+                *ngIf="isPending(pharmacy.approvalStatus)"
+                class="btn btn-sm btn-danger" 
+                (click)="updateApproval(pharmacy.id, ApprovalStatus.Rejected)"
+                title="Reject"
+                [disabled]="isProcessing"
+              >
+                ❌ Reject
+              </button>
+              <button 
+                *ngIf="isApproved(pharmacy.approvalStatus)"
+                class="btn btn-sm btn-danger" 
+                (click)="updateApproval(pharmacy.id, ApprovalStatus.Rejected)"
+                title="Disapprove"
+                [disabled]="isProcessing"
+              >
+                ❌ Disapprove
+              </button>
+              <button 
+                class="btn btn-sm btn-secondary" 
+                (click)="viewPharmacy(pharmacy)"
+                title="View Details"
+              >
+                👁️ View
+              </button>
+              <button 
+                class="btn btn-sm btn-primary" 
+                (click)="editPharmacy(pharmacy)"
+                title="Edit Pharmacy"
+              >
+                ✏️ Edit
+              </button>
+              <button 
+                class="btn btn-sm btn-danger" 
+                (click)="deletePharmacy(pharmacy.id, pharmacy.name)"
+                title="Delete Pharmacy"
+                [disabled]="isProcessing"
+              >
+                🗑️ Delete
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- View Pharmacy Modal -->
+  <div *ngIf="selectedPharmacy && !isEditing" class="modal-overlay" (click)="closeModal()">
+    <div class="modal-content card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Pharmacy Details</h2>
+        <button class="close-btn" (click)="closeModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="detail-section">
+          <h3>Basic Information</h3>
+          <div class="detail-item">
+            <span class="detail-label">Name:</span>
+            <span class="detail-value">{{ selectedPharmacy.name }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">License Number:</span>
+            <span class="detail-value">{{ selectedPharmacy.licenseNumber }}</span>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>Contact Information</h3>
+          <div class="detail-item">
+            <span class="detail-label">Email:</span>
+            <span class="detail-value">{{ selectedPharmacy.email }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Phone:</span>
+            <span class="detail-value">{{ selectedPharmacy.phoneNumber }}</span>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>Address</h3>
+          <div class="detail-item">
+            <span class="detail-label">Address:</span>
+            <span class="detail-value">
+              {{ selectedPharmacy.address }}, {{ selectedPharmacy.city }}, 
+              {{ selectedPharmacy.state }} {{ selectedPharmacy.zipCode }}
+            </span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Coordinates:</span>
+            <span class="detail-value">{{ selectedPharmacy.latitude }}, {{ selectedPharmacy.longitude }}</span>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>Operating Hours</h3>
+          <div class="operating-hours-list">
+            <div *ngFor="let day of getDays()" class="day-item">
+              <span class="day-name">{{ day.name }}:</span>
+              <span class="day-hours">
+                <ng-container *ngIf="getDayHours(selectedPharmacy, day.key); let dayHours">
+                  <span *ngIf="dayHours.isOpen">
+                    {{ dayHours.openTime }} - {{ dayHours.closeTime }}
+                  </span>
+                  <span *ngIf="!dayHours.isOpen" class="closed">Closed</span>
+                </ng-container>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>Status & Dates</h3>
+          <div class="detail-item">
+            <span class="detail-label">Approval Status:</span>
+            <span class="status-badge" [ngClass]="getApprovalStatusClass(selectedPharmacy.approvalStatus)">
+              {{ getApprovalStatusName(selectedPharmacy.approvalStatus) }}
+            </span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Pharmacy ID:</span>
+            <span class="detail-value">{{ selectedPharmacy.id }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Registered:</span>
+            <span class="detail-value">{{ formatDate(selectedPharmacy.createdAt) }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedPharmacy.approvedAt">
+            <span class="detail-label">Approved:</span>
+            <span class="detail-value">{{ formatDate(selectedPharmacy.approvedAt) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button *ngIf="isPending(selectedPharmacy.approvalStatus)" class="btn btn-success" (click)="updateApproval(selectedPharmacy.id, ApprovalStatus.Approved)" [disabled]="isProcessing">
+          Approve Pharmacy
+        </button>
+        <button *ngIf="isRejected(selectedPharmacy.approvalStatus)" class="btn btn-success" (click)="updateApproval(selectedPharmacy.id, ApprovalStatus.Approved)" [disabled]="isProcessing">
+          Approve Pharmacy
+        </button>
+        <button *ngIf="isPending(selectedPharmacy.approvalStatus)" class="btn btn-danger" (click)="updateApproval(selectedPharmacy.id, ApprovalStatus.Rejected)" [disabled]="isProcessing">
+          Reject Pharmacy
+        </button>
+        <button *ngIf="isApproved(selectedPharmacy.approvalStatus)" class="btn btn-danger" (click)="updateApproval(selectedPharmacy.id, ApprovalStatus.Rejected)" [disabled]="isProcessing">
+          Disapprove Pharmacy
+        </button>
+        <button class="btn btn-primary" (click)="editPharmacy(selectedPharmacy)">Edit Pharmacy</button>
+        <button class="btn btn-secondary" (click)="closeModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Pharmacy Modal -->
+  <div *ngIf="selectedPharmacy && isEditing" class="modal-overlay" (click)="closeModal()">
+    <div class="modal-content card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Edit Pharmacy: {{ selectedPharmacy.name }}</h2>
+        <button class="close-btn" (click)="closeModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <form [formGroup]="editForm" (ngSubmit)="savePharmacy()">
+          <div class="form-section">
+            <h3>Basic Information</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="editName" class="form-label">Pharmacy Name *</label>
+                <input id="editName" type="text" formControlName="name" class="form-input" />
+              </div>
+              <div class="form-group">
+                <label for="editLicense" class="form-label">License Number *</label>
+                <input id="editLicense" type="text" formControlName="licenseNumber" class="form-input" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="editBusinessLicense" class="form-label">Pharmacy Shop Business License *</label>
+              <input id="editBusinessLicense" type="text" formControlName="businessLicense" class="form-input" />
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>Contact Information</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="editEmail" class="form-label">Email *</label>
+                <input id="editEmail" type="email" formControlName="email" class="form-input" />
+              </div>
+              <div class="form-group">
+                <label for="editPhone" class="form-label">Phone *</label>
+                <input id="editPhone" type="tel" formControlName="phoneNumber" class="form-input" />
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>Address</h3>
+            <div class="form-group">
+              <label for="editAddress" class="form-label">Street Address *</label>
+              <input id="editAddress" type="text" formControlName="address" class="form-input" />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="editCity" class="form-label">City *</label>
+                <input id="editCity" type="text" formControlName="city" class="form-input" />
+              </div>
+              <div class="form-group">
+                <label for="editState" class="form-label">State *</label>
+                <input id="editState" type="text" formControlName="state" class="form-input" />
+              </div>
+              <div class="form-group">
+                <label for="editZipCode" class="form-label">Zip Code *</label>
+                <input id="editZipCode" type="text" formControlName="zipCode" class="form-input" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="editLatitude" class="form-label">Latitude *</label>
+                <input id="editLatitude" type="number" step="any" formControlName="latitude" class="form-input" />
+              </div>
+              <div class="form-group">
+                <label for="editLongitude" class="form-label">Longitude *</label>
+                <input id="editLongitude" type="number" step="any" formControlName="longitude" class="form-input" />
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary" [disabled]="editForm.invalid || isProcessing">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+

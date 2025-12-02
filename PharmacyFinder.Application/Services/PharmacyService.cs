@@ -32,14 +32,14 @@ namespace PharmacyFinder.Application.Services
                 throw new UnauthorizedAccessException("Only pharmacy owners can register pharmacies");
             }
 
-            // Check if owner already has a pharmacy
-            var existingPharmacy = await _context.Pharmacies
-                .FirstOrDefaultAsync(p => p.OwnerId == ownerId && p.IsActive);
+            // Check if owner already has a pharmacy - REMOVED to allow multiple pharmacies
+            // var existingPharmacy = await _context.Pharmacies
+            //     .FirstOrDefaultAsync(p => p.OwnerId == ownerId && p.IsActive);
             
-            if (existingPharmacy != null)
-            {
-                throw new InvalidOperationException("You already have a registered pharmacy");
-            }
+            // if (existingPharmacy != null)
+            // {
+            //     throw new InvalidOperationException("You already have a registered pharmacy");
+            // }
 
             // Use owner's license number (Health Ministry License) for the pharmacy
             if (string.IsNullOrWhiteSpace(owner.LicenseNumber))
@@ -90,13 +90,19 @@ namespace PharmacyFinder.Application.Services
             return pharmacy == null ? null : await MapToDtoAsync(pharmacy);
         }
 
-        public async Task<PharmacyDto?> GetPharmacyByOwnerIdAsync(int ownerId)
+        public async Task<List<PharmacyDto>> GetPharmaciesByOwnerIdAsync(int ownerId)
         {
-            var pharmacy = await _context.Pharmacies
+            var pharmacies = await _context.Pharmacies
                 .Include(p => p.Owner)
-                .FirstOrDefaultAsync(p => p.OwnerId == ownerId && p.IsActive);
+                .Where(p => p.OwnerId == ownerId && p.IsActive)
+                .ToListAsync();
 
-            return pharmacy == null ? null : await MapToDtoAsync(pharmacy);
+            var result = new List<PharmacyDto>();
+            foreach (var pharmacy in pharmacies)
+            {
+                result.Add(await MapToDtoAsync(pharmacy));
+            }
+            return result;
         }
 
         public async Task<List<PharmacyDto>> GetPendingPharmaciesAsync()

@@ -1,0 +1,129 @@
+<div class="pharmacy-approval-container">
+  <div class="header">
+    <h1>Pharmacy Approvals</h1>
+    <p>Review and approve pharmacy registrations</p>
+    <div class="filter-controls">
+      <button 
+        class="filter-btn" 
+        [class.active]="showOnlyPending"
+        (click)="toggleFilter()"
+      >
+        {{ showOnlyPending ? 'Show All' : 'Show Pending Only' }}
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-container">
+    <p>Loading pharmacies...</p>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-error">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+  </div>
+
+  <div *ngIf="!isLoading && filteredPharmacies.length === 0" class="empty-state">
+    <p>{{ showOnlyPending ? 'No pending pharmacies to review.' : 'No pharmacies found.' }}</p>
+  </div>
+
+  <div *ngIf="!isLoading && filteredPharmacies.length > 0" class="pharmacies-list">
+    <div *ngFor="let pharmacy of filteredPharmacies" class="pharmacy-card card">
+      <div class="pharmacy-header">
+        <div>
+          <h2>{{ pharmacy.name }}</h2>
+          <p class="pharmacy-owner">Owner: {{ pharmacy.ownerName || 'N/A' }}</p>
+        </div>
+        <div class="status-badge" [ngClass]="getApprovalStatusClass(pharmacy.approvalStatus)">
+          {{ getApprovalStatusName(pharmacy.approvalStatus) }}
+        </div>
+      </div>
+
+      <div class="pharmacy-details">
+        <div class="detail-section">
+          <h3>Contact Information</h3>
+          <div class="detail-item">
+            <span class="detail-label">Email:</span>
+            <span class="detail-value">{{ pharmacy.email }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Phone:</span>
+            <span class="detail-value">{{ pharmacy.phoneNumber }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">License Number:</span>
+            <span class="detail-value">{{ pharmacy.licenseNumber }}</span>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>Address</h3>
+          <div class="detail-item">
+            <span class="detail-value">
+              {{ pharmacy.address }}, {{ pharmacy.city }}, {{ pharmacy.state }} {{ pharmacy.zipCode }}
+            </span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Coordinates:</span>
+            <span class="detail-value">{{ pharmacy.latitude }}, {{ pharmacy.longitude }}</span>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>Operating Hours</h3>
+          <div class="operating-hours-display">
+            <div *ngFor="let day of getDays()" class="day-hours-display">
+              <span class="day-name">{{ day.name }}:</span>
+              <span class="day-hours">
+                <ng-container *ngIf="getDayHours(pharmacy, day.key); let dayHours">
+                  <span *ngIf="dayHours.isOpen">
+                    {{ dayHours.openTime }} - {{ dayHours.closeTime }}
+                  </span>
+                  <span *ngIf="!dayHours.isOpen" class="closed">Closed</span>
+                </ng-container>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <div class="detail-item">
+            <span class="detail-label">Registered:</span>
+            <span class="detail-value">{{ formatDate(pharmacy.createdAt) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="isPending(pharmacy.approvalStatus)" class="pharmacy-actions">
+        <button
+          class="btn btn-danger"
+          (click)="updateApproval(pharmacy.id, 3)"
+          [disabled]="isProcessing"
+        >
+          Reject
+        </button>
+        <button
+          class="btn btn-success"
+          (click)="updateApproval(pharmacy.id, 2)"
+          [disabled]="isProcessing"
+        >
+          Approve
+        </button>
+      </div>
+      
+      <div *ngIf="!isPending(pharmacy.approvalStatus)" class="pharmacy-status-info">
+        <p class="status-message">
+          This pharmacy has been 
+          <span [ngClass]="getApprovalStatusClass(pharmacy.approvalStatus)" class="status-text">
+            {{ getApprovalStatusName(pharmacy.approvalStatus) }}
+          </span>
+          <span *ngIf="pharmacy.approvedAt"> on {{ formatDate(pharmacy.approvedAt) }}</span>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+
