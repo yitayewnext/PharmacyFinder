@@ -16,6 +16,10 @@ namespace PharmacyFinder.Core.DTOs
         public int PharmacyId { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        // Optional pharmacy information (for matched medicines in prescriptions)
+        public string? PharmacyName { get; set; }
+        public string? PharmacyAddress { get; set; }
+        public string? PharmacyPhoneNumber { get; set; }
     }
 
     public class CreateMedicineDto
@@ -67,5 +71,29 @@ namespace PharmacyFinder.Core.DTOs
 
         [MaxLength(50)]
         public string? Category { get; set; }
+    }
+
+    public class MedicineSearchResultDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string Manufacturer { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        public int Quantity { get; set; }
+        public bool IsAvailable => Quantity > 0;
+        public DateTime ExpiryDate { get; set; }
+        public bool IsPrescriptionRequired { get; set; }
+        public string Category { get; set; } = string.Empty;
+        public int PharmacyId { get; set; }
+        public string PharmacyName { get; set; } = string.Empty;
+        public string PharmacyAddress { get; set; } = string.Empty;
+        public string PharmacyCity { get; set; } = string.Empty;
+        public string PharmacyState { get; set; } = string.Empty;
+        public string PharmacyPhoneNumber { get; set; } = string.Empty;
+        public double PharmacyLatitude { get; set; }
+        public double PharmacyLongitude { get; set; }
+        public double? DistanceInKm { get; set; }
+        public DateTime CreatedAt { get; set; }
     }
 }

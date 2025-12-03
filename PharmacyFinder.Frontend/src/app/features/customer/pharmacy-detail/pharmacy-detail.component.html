@@ -1,0 +1,51 @@
+<div class="pharmacy-detail-container">
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading pharmacy details...</p>
+  </div>
+
+  <div *ngIf="error" class="alert alert-error">
+    <strong>Error!</strong>
+    <span>{{ error }}</span>
+  </div>
+
+  <div *ngIf="!isLoading && pharmacy" class="detail-content">
+    <div class="detail-header">
+      <a routerLink="/customer/pharmacies" class="back-link">← Back to Pharmacies</a>
+      <h1>{{ pharmacy.name }}</h1>
+      <span class="approved-badge">✓ Approved</span>
+    </div>
+
+    <div class="detail-grid">
+      <div class="detail-card">
+        <h3 class="card-title">Contact Information</h3>
+        <div class="info-list">
+          <div class="info-row">
+            <span class="info-label">📍 Address:</span>
+            <span class="info-value">{{ getFullAddress() }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">📞 Phone:</span>
+            <span class="info-value">{{ pharmacy.phoneNumber }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">✉️ Email:</span>
+            <span class="info-value">{{ pharmacy.email }}</span>
+          </div>
+        </div>
+        <button 
+          class="btn btn-primary" 
+          (click)="getDirections()"
+          *ngIf="pharmacy.latitude && pharmacy.longitude">
+          📍 Get Directions
+        </button>
+      </div>
+
+      <div class="detail-card">
+        <h3 class="card-title">Operating Hours</h3>
+        <pre class="operating-hours">{{ formatOperatingHours() }}</pre>
+      </div>
+    </div>
+  </div>
+</div>
+

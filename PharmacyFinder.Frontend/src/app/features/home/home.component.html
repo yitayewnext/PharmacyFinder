@@ -10,8 +10,9 @@
           class="search-input" 
           placeholder="Search for pharmacies or medicines..."
           [(ngModel)]="searchQuery"
+          (keyup.enter)="performSearch()"
         />
-        <button class="btn btn-primary search-btn">
+        <button class="btn btn-primary search-btn" (click)="performSearch()">
           <span>🔍</span> Search
         </button>
       </div>
@@ -25,25 +26,25 @@
         <div class="feature-icon">🔍</div>
         <h3>Search Pharmacies</h3>
         <p>Find pharmacies near you with our advanced search</p>
-        <button class="btn btn-outline">Explore</button>
+        <button class="btn btn-outline" (click)="navigateToPharmacySearch()">Explore</button>
       </div>
       <div class="feature-card card">
         <div class="feature-icon">💊</div>
         <h3>Find Medicines</h3>
         <p>Search for specific medicines and compare prices</p>
-        <button class="btn btn-outline">Search</button>
+        <button class="btn btn-outline" (click)="navigateToMedicineSearch()">Search</button>
       </div>
       <div class="feature-card card">
-        <div class="feature-icon">📍</div>
-        <h3>Get Directions</h3>
-        <p>Get directions to the nearest pharmacy</p>
-        <button class="btn btn-outline">Find Route</button>
+        <div class="feature-icon">📋</div>
+        <h3>Upload Prescription</h3>
+        <p>Upload your prescription and find available medicines</p>
+        <button class="btn btn-outline" (click)="navigateToPrescriptionUpload()">Upload</button>
       </div>
       <div class="feature-card card">
-        <div class="feature-icon">⭐</div>
-        <h3>Read Reviews</h3>
-        <p>See what others say about pharmacies</p>
-        <button class="btn btn-outline">View Reviews</button>
+        <div class="feature-icon">📄</div>
+        <h3>My Prescriptions</h3>
+        <p>View and manage your uploaded prescriptions</p>
+        <button class="btn btn-outline" (click)="navigateToPrescriptions()">View</button>
       </div>
     </div>
   </div>
@@ -51,17 +52,17 @@
   <div class="quick-actions-section">
     <h2 class="section-title">Quick Actions</h2>
     <div class="actions-grid">
-      <button class="action-card card">
+      <button class="action-card card" (click)="navigateToPharmacySearch()">
         <span class="action-icon">🏥</span>
         <span class="action-text">Browse All Pharmacies</span>
         <span class="action-arrow">→</span>
       </button>
-      <button class="action-card card">
+      <button class="action-card card" (click)="navigateToMedicineSearch('vaccine')">
         <span class="action-icon">💉</span>
         <span class="action-text">Find Vaccines</span>
         <span class="action-arrow">→</span>
       </button>
-      <button class="action-card card">
+      <button class="action-card card" (click)="navigateToPrescriptionUpload()">
         <span class="action-icon">📋</span>
         <span class="action-text">Prescription Services</span>
         <span class="action-arrow">→</span>
@@ -121,7 +122,7 @@
     </div>
     <div class="pharmacy-actions">
       <button class="btn btn-primary" routerLink="/pharmacy/register">Edit Pharmacy</button>
-      <button class="btn btn-outline">View Details</button>
+      <button class="btn btn-outline" (click)="viewPharmacy(pharmacy)">View Details</button>
     </div>
   </div>
 
@@ -142,60 +143,119 @@
     </button>
   </div>
 
-  <!-- Quick Stats -->
-  <div class="stats-section">
-    <h2 class="section-title">Quick Stats</h2>
-    <div class="stats-grid">
-      <div class="stat-card card">
-        <div class="stat-icon">👥</div>
-        <div class="stat-content">
-          <div class="stat-value">-</div>
-          <div class="stat-label">Total Customers</div>
-        </div>
-      </div>
-      <div class="stat-card card">
-        <div class="stat-icon">📦</div>
-        <div class="stat-content">
-          <div class="stat-value">-</div>
-          <div class="stat-label">Orders Today</div>
-        </div>
-      </div>
-      <div class="stat-card card">
-        <div class="stat-icon">⭐</div>
-        <div class="stat-content">
-          <div class="stat-value">-</div>
-          <div class="stat-label">Average Rating</div>
-        </div>
-      </div>
-      <div class="stat-card card">
-        <div class="stat-icon">💰</div>
-        <div class="stat-content">
-          <div class="stat-value">-</div>
-          <div class="stat-label">Revenue</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- Quick Actions -->
   <div class="quick-actions-section" *ngIf="isPharmacyOwnerApproved()">
     <h2 class="section-title">Quick Actions</h2>
     <div class="actions-grid">
-      <button class="action-card card" routerLink="/pharmacy/register">
+      <button class="action-card card" (click)="navigateToEditPharmacy()">
         <span class="action-icon">✏️</span>
         <span class="action-text">Edit Pharmacy Info</span>
         <span class="action-arrow">→</span>
       </button>
-      <button class="action-card card" routerLink="/pharmacy/stock">
+      <button class="action-card card" (click)="navigateToManageInventory()">
         <span class="action-icon">📦</span>
         <span class="action-text">Manage Inventory</span>
         <span class="action-arrow">→</span>
       </button>
-      <button class="action-card card">
-        <span class="action-icon">📊</span>
-        <span class="action-text">View Analytics</span>
+      <button class="action-card card" (click)="navigateToAddMedicine()">
+        <span class="action-icon">➕</span>
+        <span class="action-text">Add New Medicine</span>
         <span class="action-arrow">→</span>
       </button>
+    </div>
+  </div>
+
+  <!-- View Pharmacy Modal -->
+  <div *ngIf="selectedPharmacy" class="modal-overlay" (click)="closeModal()">
+    <div class="modal-content card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Pharmacy Details</h2>
+        <button class="close-btn" (click)="closeModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="detail-section">
+          <h3>Basic Information</h3>
+          <div class="detail-item">
+            <span class="detail-label">Name:</span>
+            <span class="detail-value">{{ selectedPharmacy.name }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">License Number:</span>
+            <span class="detail-value">{{ selectedPharmacy.licenseNumber }}</span>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>Contact Information</h3>
+          <div class="detail-item">
+            <span class="detail-label">Email:</span>
+            <span class="detail-value">{{ selectedPharmacy.email }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Phone:</span>
+            <span class="detail-value">{{ selectedPharmacy.phoneNumber }}</span>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>Address</h3>
+          <div class="detail-item">
+            <span class="detail-label">Address:</span>
+            <span class="detail-value">
+              {{ selectedPharmacy.address }}, {{ selectedPharmacy.city }}, 
+              {{ selectedPharmacy.state }} {{ selectedPharmacy.zipCode }}
+            </span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Coordinates:</span>
+            <span class="detail-value">{{ selectedPharmacy.latitude }}, {{ selectedPharmacy.longitude }}</span>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>Operating Hours</h3>
+          <div class="operating-hours-list">
+            <div *ngFor="let day of getDays()" class="day-item">
+              <span class="day-name">{{ day.name }}:</span>
+              <span class="day-hours">
+                <ng-container *ngIf="getDayHours(selectedPharmacy, day.key); let dayHours">
+                  <span *ngIf="dayHours.isOpen">
+                    {{ dayHours.openTime }} - {{ dayHours.closeTime }}
+                  </span>
+                  <span *ngIf="!dayHours.isOpen" class="closed">Closed</span>
+                </ng-container>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>Status & Dates</h3>
+          <div class="detail-item">
+            <span class="detail-label">Approval Status:</span>
+            <span class="status-badge" [ngClass]="getApprovalStatusClass(selectedPharmacy.approvalStatus)">
+              {{ getApprovalStatusName(selectedPharmacy.approvalStatus) }}
+            </span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Pharmacy ID:</span>
+            <span class="detail-value">{{ selectedPharmacy.id }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Registered:</span>
+            <span class="detail-value">{{ formatDate(selectedPharmacy.createdAt) }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedPharmacy.approvedAt">
+            <span class="detail-label">Approved:</span>
+            <span class="detail-value">{{ formatDate(selectedPharmacy.approvedAt) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-primary" (click)="closeModal()">Close</button>
+      </div>
     </div>
   </div>
 </div>
@@ -332,16 +392,6 @@
       <button class="action-card card" routerLink="/admin/user-management">
         <span class="action-icon">👥</span>
         <span class="action-text">Manage Users</span>
-        <span class="action-arrow">→</span>
-      </button>
-      <button class="action-card card">
-        <span class="action-icon">📊</span>
-        <span class="action-text">View Reports</span>
-        <span class="action-arrow">→</span>
-      </button>
-      <button class="action-card card">
-        <span class="action-icon">⚙️</span>
-        <span class="action-text">System Settings</span>
         <span class="action-arrow">→</span>
       </button>
     </div>

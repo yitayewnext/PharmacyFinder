@@ -1,0 +1,186 @@
+<div class="detail-container">
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p class="loading-text">Loading prescription...</p>
+  </div>
+
+  <div *ngIf="error" class="alert alert-error" role="alert">
+    <strong>Error!</strong>
+    <span>{{ error }}</span>
+  </div>
+
+  <div *ngIf="!isLoading && prescription" class="detail-content">
+    <div class="detail-header">
+      <div class="header-left">
+        <a routerLink="/customer/prescriptions" class="back-link">← Back to Prescriptions</a>
+        <h2>Prescription #{{ prescription.id }}</h2>
+        <span class="status-badge" [ngClass]="getStatusClass(prescription.status)">
+          {{ getStatusText(prescription.status) }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Image and Text Side-by-Side (Parallel) -->
+    <div class="image-text-parallel">
+      <!-- Prescription Image Section -->
+      <div class="detail-card image-section">
+        <h3 class="card-title">Prescription Image</h3>
+        <div class="image-container">
+          <img [src]="getFullImageUrl(prescription.imageUrl)" 
+               [alt]="'Prescription ' + prescription.id"
+               class="prescription-image"
+               (error)="onImageError($event)">
+        </div>
+      </div>
+
+      <!-- Extracted Text Section - Display text parallel to image -->
+      <div *ngIf="prescription.extractedText" class="detail-card extracted-text-section">
+        <h3 class="card-title">Extracted Text from Image</h3>
+        <div class="extracted-text-container">
+          <pre class="extracted-text-content">{{ formatExtractedText(prescription.extractedText) }}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Prescription Details Section -->
+    <div class="detail-card info-section">
+      <h3 class="card-title">Prescription Details</h3>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-label">Uploaded:</span>
+          <span class="info-value">{{ formatDate(prescription.uploadedAt) }}</span>
+        </div>
+        <div *ngIf="prescription.processedAt" class="info-item">
+          <span class="info-label">Processed:</span>
+          <span class="info-value">{{ formatDate(prescription.processedAt) }}</span>
+        </div>
+        <div *ngIf="prescription.medicines && prescription.medicines.length > 0" class="info-item">
+          <span class="info-label">Medicines Found:</span>
+          <span class="info-value">{{ prescription.medicines.length }}</span>
+        </div>
+      </div>
+
+      <div *ngIf="prescription.status !== 'Processed' && prescription.extractedText" class="action-section">
+        <button 
+          class="btn btn-primary"
+          (click)="processPrescription()"
+          [disabled]="isProcessing">
+          <span *ngIf="!isProcessing">Process Prescription & Find Medicines</span>
+          <span *ngIf="isProcessing">Processing...</span>
+        </button>
+        <p class="action-hint">Process the prescription to extract and match medicines from the stock</p>
+      </div>
+      <div *ngIf="prescription.status === 'Processed' && hasNoMatchedMedicines()" class="action-section">
+        <p class="action-hint" style="color: #d97706;">⚠️ No medicines were matched. Try reprocessing or search manually for medicines.</p>
+        <button 
+          class="btn btn-outline"
+          (click)="reprocessPrescription()"
+          [disabled]="isProcessing">
+          <span *ngIf="!isProcessing">Reprocess Prescription</span>
+          <span *ngIf="isProcessing">Processing...</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Extracted Medicines Section -->
+    <div *ngIf="prescription.medicines && prescription.medicines.length > 0" class="medicines-section">
+      <h3 class="section-title">Extracted Medicines</h3>
+      <p class="section-subtitle">Medicines found in your prescription. Click "Search" to find available options.</p>
+      <div class="medicines-grid">
+        <div *ngFor="let medicine of prescription.medicines" class="medicine-card">
+          <div class="medicine-header">
+            <div class="medicine-title-section">
+              <h4 class="medicine-name">
+                {{ getDisplayMedicineName(medicine) }}
+              </h4>
+              <p *ngIf="shouldShowExtractedName(medicine)" class="extracted-name-hint">
+                Extracted as: "{{ medicine.medicineName }}"
+              </p>
+            </div>
+            <span class="availability-badge" [ngClass]="medicine.isAvailable ? 'available' : 'unavailable'">
+              {{ medicine.isAvailable ? '✓ Available' : '✗ Not Available' }}
+            </span>
+          </div>
+          
+          <div class="medicine-details">
+            <div *ngIf="medicine.dosage" class="medicine-detail">
+              <span class="detail-label">Dosage:</span>
+              <span class="detail-value">{{ medicine.dosage }}</span>
+            </div>
+            <div *ngIf="medicine.frequency" class="medicine-detail">
+              <span class="detail-label">Frequency:</span>
+              <span class="detail-value">{{ medicine.frequency }}</span>
+            </div>
+            <div *ngIf="medicine.duration" class="medicine-detail">
+              <span class="detail-label">Duration:</span>
+              <span class="detail-value">{{ medicine.duration }}</span>
+            </div>
+            <div *ngIf="medicine.quantity" class="medicine-detail">
+              <span class="detail-label">Quantity:</span>
+              <span class="detail-value">{{ medicine.quantity }}</span>
+            </div>
+          </div>
+
+          <div *ngIf="medicine.matchedMedicine" class="matched-medicine">
+            <p class="matched-label">✓ Matched Medicine Found:</p>
+            <div class="matched-details">
+              <div class="matched-info">
+                <p class="matched-name-display"><strong>{{ medicine.matchedMedicine.name }}</strong></p>
+                
+                <div *ngIf="medicine.matchedMedicine.pharmacyName" class="pharmacy-info-section">
+                  <p class="pharmacy-name-label">🏥 Available at:</p>
+                  <p class="pharmacy-name"><strong>{{ medicine.matchedMedicine.pharmacyName }}</strong></p>
+                  <p *ngIf="medicine.matchedMedicine.pharmacyAddress" class="pharmacy-address">
+                    📍 {{ medicine.matchedMedicine.pharmacyAddress }}
+                  </p>
+                  <p *ngIf="medicine.matchedMedicine.pharmacyPhoneNumber" class="pharmacy-phone">
+                    📞 {{ medicine.matchedMedicine.pharmacyPhoneNumber }}
+                  </p>
+                </div>
+                
+                <p class="matched-price">Price: <strong>{{ medicine.matchedMedicine.price | number:'1.2-2' }} Birr</strong></p>
+                <p *ngIf="medicine.matchedMedicine.manufacturer" class="matched-manufacturer">
+                  Manufacturer: {{ medicine.matchedMedicine.manufacturer }}
+                </p>
+                <p *ngIf="medicine.matchedMedicine.category" class="matched-category">
+                  Category: {{ medicine.matchedMedicine.category }}
+                </p>
+              </div>
+              <div class="matched-actions">
+                <button 
+                  class="btn btn-small btn-primary"
+                  (click)="viewPharmacy(medicine.matchedMedicine.pharmacyId)"
+                  *ngIf="medicine.matchedMedicine.pharmacyId">
+                  View Pharmacy
+                </button>
+                <button 
+                  class="btn btn-small btn-outline"
+                  (click)="viewMatchedMedicine(medicine.matchedMedicine.id)"
+                  *ngIf="medicine.matchedMedicine.id">
+                  View Medicine Details
+                </button>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="!medicine.matchedMedicine && medicine.isAvailable" class="matched-medicine partial-match">
+            <p class="matched-label">ℹ️ Medicine exists in system but details not available</p>
+            <p class="matched-hint">Try searching for "{{ medicine.medicineName }}" to find available options.</p>
+          </div>
+
+          <div class="medicine-actions">
+            <button 
+              class="btn btn-primary btn-search"
+              (click)="searchMedicine(getDisplayMedicineName(medicine))">
+              🔍 Search for "{{ getDisplayMedicineName(medicine) }}"
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="!prescription.medicines || prescription.medicines.length === 0" class="empty-medicines">
+      <p class="empty-text">No medicines extracted yet. Process the prescription to extract medicine information.</p>
+    </div>
+  </div>
+</div>
+

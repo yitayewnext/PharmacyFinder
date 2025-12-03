@@ -83,12 +83,53 @@ namespace PharmacyFinder.API.Controllers
             }
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<MedicineDto>> GetMedicine(int id)
+        [HttpGet("search")]
+        public async Task<ActionResult<List<MedicineDto>>> SearchMedicines([FromQuery] string query)
         {
-            var medicine = await _medicineService.GetMedicineByIdAsync(id);
-            if (medicine == null) return NotFound();
-            return Ok(medicine);
+            var medicines = await _medicineService.SearchMedicinesAsync(query);
+            return Ok(medicines);
+        }
+
+        [HttpGet("search-with-pharmacy")]
+        public async Task<ActionResult<List<MedicineSearchResultDto>>> SearchMedicinesWithPharmacy(
+            [FromQuery] string? query = null,
+            [FromQuery] double? latitude = null,
+            [FromQuery] double? longitude = null,
+            [FromQuery] bool? availableOnly = null,
+            [FromQuery] decimal? minPrice = null,
+            [FromQuery] decimal? maxPrice = null,
+            [FromQuery] string? category = null,
+            [FromQuery] double? maxDistanceKm = null)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new { error = "Invalid request parameters", details = ModelState });
+            }
+
+            try
+            {
+                // Normalize empty string to null
+                query = string.IsNullOrWhiteSpace(query) ? null : query;
+
+                var medicines = await _medicineService.SearchMedicinesWithPharmacyAsync(
+                    query ?? string.Empty,
+                    latitude,
+                    longitude,
+                    availableOnly,
+                    minPrice,
+                    maxPrice,
+                    category,
+                    maxDistanceKm);
+                return Ok(medicines);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Failed to search medicines: " + ex.Message });
+            }
         }
 
         [HttpGet("pharmacy/{pharmacyId}")]
@@ -98,11 +139,13 @@ namespace PharmacyFinder.API.Controllers
             return Ok(medicines);
         }
 
-        [HttpGet("search")]
-        public async Task<ActionResult<List<MedicineDto>>> SearchMedicines([FromQuery] string query)
+        // Parameterized route must come AFTER specific routes
+        [HttpGet("{id}")]
+        public async Task<ActionResult<MedicineDto>> GetMedicine(int id)
         {
-            var medicines = await _medicineService.SearchMedicinesAsync(query);
-            return Ok(medicines);
+            var medicine = await _medicineService.GetMedicineByIdAsync(id);
+            if (medicine == null) return NotFound();
+            return Ok(medicine);
         }
 
         private int? GetCurrentUserId()

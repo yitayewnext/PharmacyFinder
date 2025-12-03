@@ -11,6 +11,7 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.FileProviders;
 
 
 
@@ -48,6 +49,8 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPharmacyService, PharmacyService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IMedicineService, MedicineService>();
+builder.Services.AddScoped<IPrescriptionService, PrescriptionService>();
+
 
 // Security Services
 builder.Services.AddScoped<IPasswordHasher, Argon2PasswordHasher>();
@@ -86,6 +89,23 @@ app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 app.UseCors("AllowAngular");
 
 app.UseHttpsRedirection();
+
+// Enable static file serving for uploaded prescription images
+// This allows the frontend to access images via URLs like /uploads/prescriptions/filename.jpg
+app.UseStaticFiles();
+
+// Also serve static files from ContentRootPath/uploads (where prescription images are stored)
+// This is needed because files are saved to ContentRootPath/uploads/prescriptions
+var contentRootPath = app.Environment.ContentRootPath;
+var uploadsPath = Path.Combine(contentRootPath, "uploads");
+if (Directory.Exists(uploadsPath))
+{
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(uploadsPath),
+        RequestPath = "/uploads"
+    });
+}
 
 // Database initialization - MUST run before app accepts requests
 using (var scope = app.Services.CreateScope())

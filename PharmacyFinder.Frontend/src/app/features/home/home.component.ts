@@ -32,6 +32,7 @@ export class HomeComponent implements OnInit {
   isLoadingPharmacy = false;
   searchQuery = '';
   showApprovalPendingMessage = false;
+  selectedPharmacy: Pharmacy | null = null;
 
   // Stats
   totalUsers = 0;
@@ -186,4 +187,76 @@ export class HomeComponent implements OnInit {
   getApprovalStatusName = getApprovalStatusName;
   getApprovalStatusClass = getApprovalStatusClass;
   getRoleName = getRoleName;
+
+  // Customer navigation methods
+  performSearch(): void {
+    if (!this.searchQuery || !this.searchQuery.trim()) {
+      // If no search query, navigate to pharmacy search
+      this.navigateToPharmacySearch();
+      return;
+    }
+
+    // Navigate to pharmacy search with the query parameter
+    // The pharmacy search page can handle searching by name, city, state, etc.
+    this.router.navigate(['/customer/pharmacies'], { 
+      queryParams: { query: this.searchQuery.trim() } 
+    });
+  }
+
+  navigateToPharmacySearch(): void {
+    this.router.navigate(['/customer/pharmacies']);
+  }
+
+  navigateToMedicineSearch(category?: string): void {
+    const queryParams: any = {};
+    if (category) {
+      queryParams.category = category;
+    }
+    this.router.navigate(['/customer/medicines'], { queryParams });
+  }
+
+  navigateToPrescriptionUpload(): void {
+    this.router.navigate(['/customer/prescriptions/upload']);
+  }
+
+  navigateToPrescriptions(): void {
+    this.router.navigate(['/customer/prescriptions']);
+  }
+
+  // Pharmacy Owner navigation methods
+  navigateToEditPharmacy(): void {
+    this.router.navigate(['/pharmacy/register']);
+  }
+
+  navigateToManageInventory(): void {
+    this.router.navigate(['/pharmacy/stock']);
+  }
+
+  navigateToAddMedicine(): void {
+    this.router.navigate(['/pharmacy/stock/add']);
+  }
+
+  viewPharmacy(pharmacy: Pharmacy): void {
+    this.selectedPharmacy = pharmacy;
+  }
+
+  closeModal(): void {
+    this.selectedPharmacy = null;
+  }
+
+  getDays() {
+    return [
+      { key: 'monday', name: 'Monday' },
+      { key: 'tuesday', name: 'Tuesday' },
+      { key: 'wednesday', name: 'Wednesday' },
+      { key: 'thursday', name: 'Thursday' },
+      { key: 'friday', name: 'Friday' },
+      { key: 'saturday', name: 'Saturday' },
+      { key: 'sunday', name: 'Sunday' }
+    ];
+  }
+
+  getDayHours(pharmacy: Pharmacy, dayKey: string) {
+    return pharmacy.operatingHours[dayKey as keyof typeof pharmacy.operatingHours];
+  }
 }

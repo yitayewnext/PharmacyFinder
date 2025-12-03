@@ -58,3 +58,16 @@ export interface UpdatePharmacyApprovalRequest {
   approvalStatus: ApprovalStatus;
 }
 
+export interface PharmacySearchResult extends Pharmacy {
+  distanceInKm?: number;
+  matchingMedicines?: PharmacyMedicine[];
+}
+
+export interface PharmacyMedicine {
+  id: number;
+  name: string;
+  price: number;
+  quantity: number;
+  isAvailable: boolean;
+}
+

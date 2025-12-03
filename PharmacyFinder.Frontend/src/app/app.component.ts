@@ -99,6 +99,33 @@ import { FooterComponent } from './core/components/footer/footer.component';
             >
               Manage Users
             </a>
+            <a 
+              *ngIf="isCustomer()" 
+              routerLink="/customer/pharmacies" 
+              class="nav-link" 
+              [class.active]="currentRoute.startsWith('/customer/pharmacies')"
+              (click)="closeMobileMenu()"
+            >
+              Find Pharmacies
+            </a>
+            <a 
+              *ngIf="isCustomer()" 
+              routerLink="/customer/medicines" 
+              class="nav-link" 
+              [class.active]="currentRoute.startsWith('/customer/medicines')"
+              (click)="closeMobileMenu()"
+            >
+              Search Medicines
+            </a>
+            <a 
+              *ngIf="isCustomer()" 
+              routerLink="/customer/prescriptions" 
+              class="nav-link" 
+              [class.active]="currentRoute.startsWith('/customer/prescriptions')"
+              (click)="closeMobileMenu()"
+            >
+              My Prescriptions
+            </a>
             <div class="profile-menu" (click)="toggleProfileMenu($event)">
               <button class="profile-icon" [attr.aria-expanded]="isProfileMenuOpen" aria-label="User profile menu">
                 <span class="profile-avatar">{{ getInitials() }}</span>
@@ -574,6 +601,12 @@ export class AppComponent implements OnInit {
     if (!this.currentUser) return false;
     const role = getRoleEnum(this.currentUser.role);
     return role === UserRole.Admin;
+  }
+
+  isCustomer(): boolean {
+    if (!this.currentUser) return false;
+    const role = getRoleEnum(this.currentUser.role);
+    return role === UserRole.Customer;
   }
 
   logout(): void {

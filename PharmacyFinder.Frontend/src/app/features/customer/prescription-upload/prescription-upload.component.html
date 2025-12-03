@@ -1,0 +1,111 @@
+<div class="upload-container">
+  <div class="upload-card">
+    <div class="upload-header">
+      <h2>Upload Prescription</h2>
+      <p class="upload-subtitle">Upload an image or PDF of your prescription to extract medicine information</p>
+    </div>
+
+    <div *ngIf="error" class="alert alert-error" role="alert">
+      <strong>Error!</strong>
+      <span>{{ error }}</span>
+    </div>
+
+    <div *ngIf="successMessage" class="alert alert-success" role="alert">
+      <strong>Success!</strong>
+      <span>{{ successMessage }}</span>
+    </div>
+
+    <div class="upload-body">
+      <div class="upload-area" 
+           [class.has-file]="selectedFile"
+           [class.is-dragging]="false">
+        <input 
+          type="file" 
+          id="file-input"
+          class="file-input"
+          accept="image/*,.pdf"
+          (change)="onFileSelected($event)"
+          [disabled]="isUploading">
+        
+        <div *ngIf="!selectedFile" class="upload-prompt">
+          <div class="upload-icon">📄</div>
+          <p class="upload-text">
+            <strong>Click to upload</strong> or drag and drop
+          </p>
+          <p class="upload-hint">
+            PNG, JPG, GIF, or PDF (MAX. 10MB)
+          </p>
+        </div>
+
+        <div *ngIf="selectedFile" class="file-preview-section">
+          <div class="file-info">
+            <div class="file-icon">📄</div>
+            <div class="file-details">
+              <p class="file-name">{{ selectedFile.name }}</p>
+              <p class="file-size">{{ formatFileSize(selectedFile.size) }}</p>
+            </div>
+            <button 
+              type="button"
+              class="remove-btn"
+              (click)="removeFile()"
+              [disabled]="isUploading"
+              title="Remove file">
+              ✕
+            </button>
+          </div>
+          
+          <div *ngIf="previewUrl" class="image-preview">
+            <img [src]="previewUrl" alt="Prescription preview" class="preview-image">
+          </div>
+        </div>
+      </div>
+
+
+      <!-- OCR Progress -->
+      <div *ngIf="isExtracting" class="ocr-progress-section">
+        <div class="progress-info">
+          <p class="progress-text">Extracting text from image... {{ extractionProgress }}%</p>
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="extractionProgress"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Extracted Text Preview -->
+      <div *ngIf="extractedText && !isExtracting" class="extracted-text-preview">
+        <h4>Extracted Text Preview:</h4>
+        <div class="text-preview-content">
+          <pre>{{ extractedText }}</pre>
+        </div>
+      </div>
+
+      <!-- OCR Toggle -->
+      <div class="ocr-toggle-section">
+        <label class="toggle-label">
+          <input 
+            type="checkbox" 
+            [(ngModel)]="enableOCR"
+            [disabled]="isUploading || isExtracting">
+          <span>Enable automatic text extraction (OCR)</span>
+        </label>
+        <p class="toggle-hint">Automatically extract text from prescription images to identify medicines</p>
+      </div>
+
+      <div class="upload-actions">
+        <button 
+          type="button"
+          class="btn btn-primary"
+          (click)="uploadPrescription()"
+          [disabled]="!selectedFile || isUploading || isExtracting">
+          <span *ngIf="!isUploading && !isExtracting">Upload Prescription</span>
+          <span *ngIf="isExtracting">Extracting Text...</span>
+          <span *ngIf="isUploading && !isExtracting">Uploading...</span>
+        </button>
+        <a routerLink="/customer/prescriptions" class="btn btn-secondary">
+          Cancel
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+

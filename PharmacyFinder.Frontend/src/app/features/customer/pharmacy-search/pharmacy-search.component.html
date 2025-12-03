@@ -1,0 +1,181 @@
+<div class="pharmacy-search-container">
+  <div class="search-header">
+    <h1>Find Pharmacies</h1>
+    <p class="search-subtitle">Search for pharmacies by location</p>
+  </div>
+
+  <!-- Location Search Filters -->
+  <div class="search-filters">
+    <div class="filter-card">
+      <div class="filter-row">
+        <div class="filter-group">
+          <label for="searchQuery">Search by Name or Address</label>
+          <input 
+            type="text" 
+            id="searchQuery"
+            class="form-input" 
+            [(ngModel)]="searchQuery"
+            placeholder="Enter pharmacy name or address..."
+            (keyup.enter)="searchPharmacies()">
+        </div>
+
+        <div class="filter-group">
+          <label for="searchCity">City</label>
+          <input 
+            type="text" 
+            id="searchCity"
+            class="form-input" 
+            [(ngModel)]="searchCity"
+            placeholder="Enter city..."
+            (keyup.enter)="searchPharmacies()">
+        </div>
+
+        <div class="filter-group">
+          <label for="searchState">State</label>
+          <input 
+            type="text" 
+            id="searchState"
+            class="form-input" 
+            [(ngModel)]="searchState"
+            placeholder="Enter state..."
+            (keyup.enter)="searchPharmacies()">
+        </div>
+
+        <div class="filter-group">
+          <label for="searchZipCode">Zip Code</label>
+          <input 
+            type="text" 
+            id="searchZipCode"
+            class="form-input" 
+            [(ngModel)]="searchZipCode"
+            placeholder="Enter zip code..."
+            (keyup.enter)="searchPharmacies()">
+        </div>
+      </div>
+
+      <div class="filter-row" *ngIf="userLatitude && userLongitude">
+        <div class="filter-group">
+          <label for="maxDistanceKmLocation">Max Distance (km)</label>
+          <input 
+            type="number" 
+            id="maxDistanceKmLocation"
+            class="form-input" 
+            [(ngModel)]="maxDistanceKm"
+            placeholder="No limit"
+            min="0"
+            step="0.1"
+            (keyup.enter)="searchPharmacies()">
+          <p class="filter-hint">Filter pharmacies within this distance</p>
+        </div>
+      </div>
+
+      <div *ngIf="locationError" class="alert alert-warning" style="margin-top: 1rem;">
+        <strong>Location Warning:</strong> {{ locationError }}
+      </div>
+
+      <div class="filter-actions">
+        <button class="btn btn-primary" (click)="searchPharmacies()" [disabled]="isLoading">
+          <span *ngIf="!isLoading">🔍 Search</span>
+          <span *ngIf="isLoading">Searching...</span>
+        </button>
+        <button class="btn btn-outline" (click)="clearSearch()" [disabled]="isLoading">
+          Clear
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="error" class="alert alert-error">
+    <strong>Error!</strong>
+    <span>{{ error }}</span>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading pharmacies...</p>
+  </div>
+
+  <div *ngIf="!isLoading && filteredPharmacies.length > 0" class="results-section">
+    <div class="results-header">
+      <h2>
+        <span *ngIf="showAll">All Pharmacies</span>
+        <span *ngIf="!showAll">Search Results</span>
+        <span class="results-count">({{ filteredPharmacies.length }})</span>
+      </h2>
+    </div>
+
+    <div class="pharmacies-grid">
+      <div *ngFor="let pharmacy of filteredPharmacies" class="pharmacy-card">
+        <div class="pharmacy-header">
+          <div class="pharmacy-title-section">
+            <h3 class="pharmacy-name">{{ pharmacy.name }}</h3>
+            <span *ngIf="pharmacy.distanceInKm" class="distance-badge">
+              📍 {{ formatDistance(pharmacy.distanceInKm) }}
+            </span>
+          </div>
+          <span class="approved-badge">✓ Approved</span>
+        </div>
+
+        <div class="pharmacy-info">
+          <div class="info-item">
+            <span class="info-icon">📍</span>
+            <span class="info-text">{{ getFullAddress(pharmacy) }}</span>
+          </div>
+          
+          <div class="info-item">
+            <span class="info-icon">📞</span>
+            <span class="info-text">{{ pharmacy.phoneNumber }}</span>
+          </div>
+          
+          <div class="info-item">
+            <span class="info-icon">✉️</span>
+            <span class="info-text">{{ pharmacy.email }}</span>
+          </div>
+
+          <div class="info-item">
+            <span class="info-icon">🕒</span>
+            <span class="info-text">{{ formatOperatingHours(pharmacy) }}</span>
+          </div>
+        </div>
+
+        <!-- Matching Medicines Section -->
+        <div *ngIf="pharmacy.matchingMedicines && pharmacy.matchingMedicines.length > 0" class="matching-medicines">
+          <h4 class="medicines-title">Available Medicines:</h4>
+          <div class="medicines-list">
+            <div *ngFor="let medicine of pharmacy.matchingMedicines" class="medicine-item">
+              <span class="medicine-name">{{ medicine.name }}</span>
+              <div class="medicine-details">
+                <span class="medicine-price">{{ medicine.price }} Birr</span>
+                <span class="medicine-stock" [class.in-stock]="medicine.isAvailable" [class.out-of-stock]="!medicine.isAvailable">
+                  {{ formatStockStatus(medicine) }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pharmacy-actions">
+          <button class="btn btn-primary btn-sm" (click)="viewPharmacyDetails(pharmacy.id)">
+            View Details
+          </button>
+          <button 
+            class="btn btn-outline btn-sm" 
+            (click)="getDirections(pharmacy.latitude, pharmacy.longitude)"
+            *ngIf="pharmacy.latitude && pharmacy.longitude">
+            📍 Get Directions
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!isLoading && filteredPharmacies.length === 0" class="empty-state">
+    <div class="empty-icon">🏥</div>
+    <h2>No pharmacies found</h2>
+    <p *ngIf="showAll">There are no approved pharmacies available at the moment.</p>
+    <p *ngIf="!showAll">Try adjusting your search criteria or clearing the filters.</p>
+    <button class="btn btn-outline" (click)="clearSearch()" *ngIf="!showAll">
+      Clear Search
+    </button>
+  </div>
+</div>

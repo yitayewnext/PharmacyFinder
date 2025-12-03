@@ -61,6 +61,36 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'customer/prescriptions',
+    loadComponent: () => import('./features/customer/prescription-list/prescription-list.component').then(m => m.PrescriptionListComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'customer/prescriptions/upload',
+    loadComponent: () => import('./features/customer/prescription-upload/prescription-upload.component').then(m => m.PrescriptionUploadComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'customer/prescriptions/:id',
+    loadComponent: () => import('./features/customer/prescription-detail/prescription-detail.component').then(m => m.PrescriptionDetailComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'customer/pharmacies',
+    loadComponent: () => import('./features/customer/pharmacy-search/pharmacy-search.component').then(m => m.PharmacySearchComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'customer/pharmacies/:id',
+    loadComponent: () => import('./features/customer/pharmacy-detail/pharmacy-detail.component').then(m => m.PharmacyDetailComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'customer/medicines',
+    loadComponent: () => import('./features/customer/medicine-search/medicine-search.component').then(m => m.MedicineSearchComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: '**',
     redirectTo: '/home'
   }

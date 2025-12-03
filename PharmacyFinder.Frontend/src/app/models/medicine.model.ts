@@ -11,6 +11,10 @@ export interface Medicine {
     pharmacyId: number;
     createdAt: Date;
     updatedAt?: Date;
+    // Optional pharmacy information (for matched medicines in prescriptions)
+    pharmacyName?: string;
+    pharmacyAddress?: string;
+    pharmacyPhoneNumber?: string;
 }
 
 export interface CreateMedicine {
@@ -33,4 +37,27 @@ export interface UpdateMedicine {
     expiryDate?: Date;
     isPrescriptionRequired?: boolean;
     category?: string;
+}
+
+export interface MedicineSearchResult {
+    id: number;
+    name: string;
+    description: string;
+    manufacturer: string;
+    price: number;
+    quantity: number;
+    isAvailable: boolean;
+    expiryDate: Date;
+    isPrescriptionRequired: boolean;
+    category: string;
+    pharmacyId: number;
+    pharmacyName: string;
+    pharmacyAddress: string;
+    pharmacyCity: string;
+    pharmacyState: string;
+    pharmacyPhoneNumber: string;
+    pharmacyLatitude: number;
+    pharmacyLongitude: number;
+    distanceInKm?: number;
+    createdAt: Date;
 }

@@ -80,5 +80,20 @@ namespace PharmacyFinder.Core.DTOs
         public double Longitude { get; set; }
         public OperatingHoursDto OperatingHours { get; set; } = new OperatingHoursDto();
     }
+
+    public class PharmacySearchResultDto : PharmacyDto
+    {
+        public double? DistanceInKm { get; set; }
+        public List<PharmacyMedicineDto> MatchingMedicines { get; set; } = new List<PharmacyMedicineDto>();
+    }
+
+    public class PharmacyMedicineDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        public int Quantity { get; set; }
+        public bool IsAvailable => Quantity > 0;
+    }
 }
 

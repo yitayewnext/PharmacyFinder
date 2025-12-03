@@ -222,6 +222,259 @@ namespace PharmacyFinder.Application.Services
             return true;
         }
 
+        public async Task<List<PharmacySearchResultDto>> SearchPharmaciesAsync(
+            string? searchQuery, 
+            string? city, 
+            string? state, 
+            string? zipCode,
+            double? userLatitude = null,
+            double? userLongitude = null,
+            double? maxDistanceKm = null)
+        {
+            // Normalize empty strings to null
+            searchQuery = string.IsNullOrWhiteSpace(searchQuery) ? null : searchQuery;
+            city = string.IsNullOrWhiteSpace(city) ? null : city;
+            state = string.IsNullOrWhiteSpace(state) ? null : state;
+            zipCode = string.IsNullOrWhiteSpace(zipCode) ? null : zipCode;
+
+            var pharmacyQuery = _context.Pharmacies
+                .Include(p => p.Owner)
+                .Where(p => p.IsActive && 
+                           p.ApprovalStatus == ApprovalStatusHelper.ApprovalStatusToString(ApprovalStatus.Approved));
+
+            // Search by name, address, or license number
+            if (!string.IsNullOrWhiteSpace(searchQuery))
+            {
+                var searchLower = searchQuery.ToLower();
+                pharmacyQuery = pharmacyQuery.Where(p => 
+                    p.Name.ToLower().Contains(searchLower) ||
+                    p.Address.ToLower().Contains(searchLower) ||
+                    p.LicenseNumber.ToLower().Contains(searchLower));
+            }
+
+            // Filter by city
+            if (!string.IsNullOrWhiteSpace(city))
+            {
+                pharmacyQuery = pharmacyQuery.Where(p => p.City.ToLower().Contains(city.ToLower()));
+            }
+
+            // Filter by state
+            if (!string.IsNullOrWhiteSpace(state))
+            {
+                pharmacyQuery = pharmacyQuery.Where(p => p.State.ToLower().Contains(state.ToLower()));
+            }
+
+            // Filter by zip code
+            if (!string.IsNullOrWhiteSpace(zipCode))
+            {
+                pharmacyQuery = pharmacyQuery.Where(p => p.ZipCode.Contains(zipCode));
+            }
+
+            var pharmacies = await pharmacyQuery.ToListAsync();
+            var result = new List<PharmacySearchResultDto>();
+
+            foreach (var pharmacy in pharmacies)
+            {
+                var pharmacyDto = await MapToDtoAsync(pharmacy);
+                var searchResult = new PharmacySearchResultDto
+                {
+                    Id = pharmacyDto.Id,
+                    Name = pharmacyDto.Name,
+                    Address = pharmacyDto.Address,
+                    City = pharmacyDto.City,
+                    State = pharmacyDto.State,
+                    ZipCode = pharmacyDto.ZipCode,
+                    PhoneNumber = pharmacyDto.PhoneNumber,
+                    Email = pharmacyDto.Email,
+                    LicenseNumber = pharmacyDto.LicenseNumber,
+                    BusinessLicense = pharmacyDto.BusinessLicense,
+                    Latitude = pharmacyDto.Latitude,
+                    Longitude = pharmacyDto.Longitude,
+                    OperatingHours = pharmacyDto.OperatingHours,
+                    ApprovalStatus = pharmacyDto.ApprovalStatus,
+                    OwnerId = pharmacyDto.OwnerId,
+                    OwnerName = pharmacyDto.OwnerName,
+                    CreatedAt = pharmacyDto.CreatedAt,
+                    UpdatedAt = pharmacyDto.UpdatedAt,
+                    ApprovedAt = pharmacyDto.ApprovedAt,
+                    IsActive = pharmacyDto.IsActive
+                };
+
+                // Calculate distance if user coordinates provided
+                if (userLatitude.HasValue && userLongitude.HasValue)
+                {
+                    searchResult.DistanceInKm = CalculateDistance(
+                        userLatitude.Value,
+                        userLongitude.Value,
+                        pharmacy.Latitude,
+                        pharmacy.Longitude);
+                }
+
+                // Apply distance filter if specified
+                if (maxDistanceKm.HasValue && searchResult.DistanceInKm.HasValue)
+                {
+                    if (searchResult.DistanceInKm.Value > maxDistanceKm.Value)
+                    {
+                        continue; // Skip this pharmacy
+                    }
+                }
+
+                result.Add(searchResult);
+            }
+
+            // Sort by distance if available, otherwise by name
+            if (userLatitude.HasValue && userLongitude.HasValue)
+            {
+                result = result.OrderBy(p => p.DistanceInKm ?? double.MaxValue).ToList();
+            }
+            else
+            {
+                result = result.OrderBy(p => p.Name).ToList();
+            }
+
+            return result;
+        }
+
+        public async Task<List<PharmacySearchResultDto>> SearchPharmaciesByMedicineAsync(
+            string? medicineName,
+            double? userLatitude,
+            double? userLongitude,
+            bool? availableOnly,
+            decimal? maxPrice,
+            double? maxDistanceKm)
+        {
+            // Start with approved and active pharmacies
+            var pharmacyQuery = _context.Pharmacies
+                .Include(p => p.Owner)
+                .Where(p => p.IsActive && 
+                           p.ApprovalStatus == ApprovalStatusHelper.ApprovalStatusToString(ApprovalStatus.Approved));
+
+            // If searching by medicine, filter pharmacies that have that medicine
+            if (!string.IsNullOrWhiteSpace(medicineName))
+            {
+                var medicineLower = medicineName.ToLower();
+                var pharmaciesWithMedicine = _context.Medicines
+                    .Where(m => m.Name.ToLower().Contains(medicineLower) &&
+                               (availableOnly != true || m.Quantity > 0) &&
+                               (!maxPrice.HasValue || m.Price <= maxPrice.Value) &&
+                               m.ExpiryDate > DateTime.UtcNow)
+                    .Select(m => m.PharmacyId)
+                    .Distinct();
+
+                pharmacyQuery = pharmacyQuery.Where(p => pharmaciesWithMedicine.Contains(p.Id));
+            }
+
+            var pharmacies = await pharmacyQuery.ToListAsync();
+            var result = new List<PharmacySearchResultDto>();
+
+            foreach (var pharmacy in pharmacies)
+            {
+                var pharmacyDto = await MapToDtoAsync(pharmacy);
+                var searchResult = new PharmacySearchResultDto
+                {
+                    Id = pharmacyDto.Id,
+                    Name = pharmacyDto.Name,
+                    Address = pharmacyDto.Address,
+                    City = pharmacyDto.City,
+                    State = pharmacyDto.State,
+                    ZipCode = pharmacyDto.ZipCode,
+                    PhoneNumber = pharmacyDto.PhoneNumber,
+                    Email = pharmacyDto.Email,
+                    LicenseNumber = pharmacyDto.LicenseNumber,
+                    BusinessLicense = pharmacyDto.BusinessLicense,
+                    Latitude = pharmacyDto.Latitude,
+                    Longitude = pharmacyDto.Longitude,
+                    OperatingHours = pharmacyDto.OperatingHours,
+                    ApprovalStatus = pharmacyDto.ApprovalStatus,
+                    OwnerId = pharmacyDto.OwnerId,
+                    OwnerName = pharmacyDto.OwnerName,
+                    CreatedAt = pharmacyDto.CreatedAt,
+                    UpdatedAt = pharmacyDto.UpdatedAt,
+                    ApprovedAt = pharmacyDto.ApprovedAt,
+                    IsActive = pharmacyDto.IsActive
+                };
+
+                // Calculate distance if user coordinates provided
+                if (userLatitude.HasValue && userLongitude.HasValue)
+                {
+                    searchResult.DistanceInKm = CalculateDistance(
+                        userLatitude.Value,
+                        userLongitude.Value,
+                        pharmacy.Latitude,
+                        pharmacy.Longitude);
+                }
+
+                // Get matching medicines if medicine search was performed
+                if (!string.IsNullOrWhiteSpace(medicineName))
+                {
+                    var medicineLower = medicineName.ToLower();
+                    var medicines = await _context.Medicines
+                        .Where(m => m.PharmacyId == pharmacy.Id &&
+                                   m.Name.ToLower().Contains(medicineLower) &&
+                                   (availableOnly != true || m.Quantity > 0) &&
+                                   (!maxPrice.HasValue || m.Price <= maxPrice.Value) &&
+                                   m.ExpiryDate > DateTime.UtcNow)
+                        .ToListAsync();
+
+                    searchResult.MatchingMedicines = medicines.Select(m => new PharmacyMedicineDto
+                    {
+                        Id = m.Id,
+                        Name = m.Name,
+                        Price = m.Price,
+                        Quantity = m.Quantity
+                    }).ToList();
+                }
+
+                // Apply distance filter if specified
+                if (maxDistanceKm.HasValue && searchResult.DistanceInKm.HasValue)
+                {
+                    if (searchResult.DistanceInKm.Value > maxDistanceKm.Value)
+                    {
+                        continue; // Skip this pharmacy
+                    }
+                }
+
+                result.Add(searchResult);
+            }
+
+            // Sort by distance if available, otherwise by name
+            if (userLatitude.HasValue && userLongitude.HasValue)
+            {
+                result = result.OrderBy(p => p.DistanceInKm ?? double.MaxValue).ToList();
+            }
+            else
+            {
+                result = result.OrderBy(p => p.Name).ToList();
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Calculate distance between two coordinates using Haversine formula
+        /// Returns distance in kilometers
+        /// </summary>
+        private static double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
+        {
+            const double earthRadiusKm = 6371.0;
+
+            var dLat = ToRadians(lat2 - lat1);
+            var dLon = ToRadians(lon2 - lon1);
+
+            var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+                    Math.Cos(ToRadians(lat1)) * Math.Cos(ToRadians(lat2)) *
+                    Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+
+            var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+
+            return earthRadiusKm * c;
+        }
+
+        private static double ToRadians(double degrees)
+        {
+            return degrees * (Math.PI / 180.0);
+        }
+
         private async Task<PharmacyDto> MapToDtoAsync(Pharmacy pharmacy)
         {
             OperatingHoursDto? operatingHours = null;

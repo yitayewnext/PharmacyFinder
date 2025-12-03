@@ -48,15 +48,52 @@ namespace PharmacyFinder.API.Controllers
             }
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<PharmacyDto>> GetPharmacy(int id)
+        [HttpGet("search")]
+        public async Task<ActionResult<List<PharmacySearchResultDto>>> SearchPharmacies(
+            [FromQuery] string? query = null, 
+            [FromQuery] string? city = null, 
+            [FromQuery] string? state = null, 
+            [FromQuery] string? zipCode = null,
+            [FromQuery] double? latitude = null,
+            [FromQuery] double? longitude = null,
+            [FromQuery] double? maxDistanceKm = null)
         {
-            var pharmacy = await _pharmacyService.GetPharmacyByIdAsync(id);
-            if (pharmacy == null)
+            try
             {
-                return NotFound();
+                var pharmacies = await _pharmacyService.SearchPharmaciesAsync(
+                    query, city, state, zipCode, latitude, longitude, maxDistanceKm);
+                return Ok(pharmacies);
             }
-            return Ok(pharmacy);
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Failed to search pharmacies: " + ex.Message });
+            }
+        }
+
+        [HttpGet("search-by-medicine")]
+        public async Task<ActionResult<List<PharmacySearchResultDto>>> SearchPharmaciesByMedicine(
+            [FromQuery] string? medicineName = null,
+            [FromQuery] double? latitude = null,
+            [FromQuery] double? longitude = null,
+            [FromQuery] bool? availableOnly = null,
+            [FromQuery] decimal? maxPrice = null,
+            [FromQuery] double? maxDistanceKm = null)
+        {
+            try
+            {
+                var pharmacies = await _pharmacyService.SearchPharmaciesByMedicineAsync(
+                    medicineName,
+                    latitude,
+                    longitude,
+                    availableOnly,
+                    maxPrice,
+                    maxDistanceKm);
+                return Ok(pharmacies);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Failed to search pharmacies by medicine: " + ex.Message });
+            }
         }
 
         [HttpGet("my-pharmacies")]
@@ -86,6 +123,18 @@ namespace PharmacyFinder.API.Controllers
         {
             var pharmacies = await _pharmacyService.GetAllPharmaciesAsync();
             return Ok(pharmacies);
+        }
+
+        // Parameterized route must come AFTER specific routes
+        [HttpGet("{id}")]
+        public async Task<ActionResult<PharmacyDto>> GetPharmacy(int id)
+        {
+            var pharmacy = await _pharmacyService.GetPharmacyByIdAsync(id);
+            if (pharmacy == null)
+            {
+                return NotFound();
+            }
+            return Ok(pharmacy);
         }
 
         [HttpPut("{id}/approval")]

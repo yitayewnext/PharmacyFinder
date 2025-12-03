@@ -10,6 +10,8 @@ namespace PharmacyFinder.Infrastructure.Data
         public DbSet<User> Users => Set<User>();
         public DbSet<Pharmacy> Pharmacies => Set<Pharmacy>();
         public DbSet<Medicine> Medicines => Set<Medicine>();
+        public DbSet<Prescription> Prescriptions => Set<Prescription>();
+        public DbSet<PrescriptionMedicine> PrescriptionMedicines => Set<PrescriptionMedicine>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -59,6 +61,36 @@ namespace PharmacyFinder.Infrastructure.Data
                     .WithMany()
                     .HasForeignKey(m => m.PharmacyId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<Prescription>(entity =>
+            {
+                entity.Property(p => p.ImageUrl).IsRequired().HasMaxLength(500);
+                entity.Property(p => p.Status).IsRequired().HasMaxLength(50).HasDefaultValue("Pending");
+
+                entity.HasOne(p => p.Customer)
+                    .WithMany()
+                    .HasForeignKey(p => p.CustomerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<PrescriptionMedicine>(entity =>
+            {
+                entity.Property(pm => pm.MedicineName).IsRequired().HasMaxLength(200);
+                entity.Property(pm => pm.Dosage).HasMaxLength(100);
+                entity.Property(pm => pm.Frequency).HasMaxLength(100);
+                entity.Property(pm => pm.Duration).HasMaxLength(100);
+                entity.Property(pm => pm.Quantity).HasMaxLength(50);
+
+                entity.HasOne(pm => pm.Prescription)
+                    .WithMany(p => p.Medicines)
+                    .HasForeignKey(pm => pm.PrescriptionId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(pm => pm.MatchedMedicine)
+                    .WithMany()
+                    .HasForeignKey(pm => pm.MatchedMedicineId)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
         }
     }

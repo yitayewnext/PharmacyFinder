@@ -1,0 +1,213 @@
+<div class="medicine-search-container">
+  <div class="search-header">
+    <h1>Search for Medicines</h1>
+    <p class="search-subtitle">Find medicines across all pharmacies, compare prices, and see availability</p>
+  </div>
+
+  <div class="search-filters">
+    <div class="filter-card">
+      <div class="filter-row">
+        <div class="filter-group full-width">
+          <label for="searchQuery">Search for Medicine</label>
+          <input 
+            type="text" 
+            id="searchQuery"
+            class="form-input" 
+            [(ngModel)]="searchQuery"
+            placeholder="Enter medicine name (e.g., Paracetamol, Aspirin, Amoxicillin)..."
+            (keyup.enter)="searchMedicines()">
+        </div>
+      </div>
+
+      <div class="filter-row">
+        <div class="filter-group">
+          <label for="availableOnly">
+            <input 
+              type="checkbox" 
+              id="availableOnly"
+              [(ngModel)]="availableOnly">
+            Available Only
+          </label>
+          <p class="filter-hint">Show only medicines in stock</p>
+        </div>
+
+        <div class="filter-group">
+          <label for="minPrice">Min Price (Birr)</label>
+          <input 
+            type="number" 
+            id="minPrice"
+            class="form-input" 
+            [(ngModel)]="minPrice"
+            placeholder="No minimum"
+            min="0"
+            step="0.01">
+        </div>
+
+        <div class="filter-group">
+          <label for="maxPrice">Max Price (Birr)</label>
+          <input 
+            type="number" 
+            id="maxPrice"
+            class="form-input" 
+            [(ngModel)]="maxPrice"
+            placeholder="No maximum"
+            min="0"
+            step="0.01">
+        </div>
+
+        <div class="filter-group">
+          <label for="category">Category</label>
+          <input 
+            type="text" 
+            id="category"
+            class="form-input" 
+            [(ngModel)]="category"
+            placeholder="Filter by category...">
+        </div>
+
+        <div class="filter-group">
+          <label for="maxDistanceKm">Max Distance (km)</label>
+          <input 
+            type="number" 
+            id="maxDistanceKm"
+            class="form-input" 
+            [(ngModel)]="maxDistanceKm"
+            placeholder="No limit"
+            min="0"
+            step="0.1">
+          <p class="filter-hint" *ngIf="!userLatitude">Enable location to filter by distance</p>
+        </div>
+      </div>
+
+      <div class="filter-actions">
+        <button class="btn btn-primary" (click)="searchMedicines()" [disabled]="isLoading">
+          <span *ngIf="!isLoading">🔍 {{ searchQuery && searchQuery.trim() ? 'Search Medicines' : 'Load All Medicines' }}</span>
+          <span *ngIf="isLoading">Loading...</span>
+        </button>
+        <button class="btn btn-outline" (click)="clearSearch()" [disabled]="isLoading">
+          Clear & Show All
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="error" class="alert alert-error">
+    <strong>Error!</strong>
+    <span>{{ error }}</span>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Searching medicines...</p>
+  </div>
+
+  <!-- Results Section -->
+  <div *ngIf="!isLoading && filteredMedicines.length > 0" class="results-section">
+    <div class="results-header">
+      <h2>
+        <span *ngIf="searchQuery && searchQuery.trim()">Search Results</span>
+        <span *ngIf="!searchQuery || !searchQuery.trim()">All Medicines</span>
+        <span class="results-count">({{ filteredMedicines.length }} found)</span>
+      </h2>
+      <div class="sort-controls">
+        <label for="sortBy">Sort by:</label>
+        <select id="sortBy" class="sort-select" [(ngModel)]="sortBy" (change)="onSortChange()">
+          <option value="price">Price</option>
+          <option value="distance">Distance</option>
+          <option value="name">Name</option>
+        </select>
+        <select class="sort-select" [(ngModel)]="sortOrder" (change)="onSortChange()">
+          <option value="asc">Low to High</option>
+          <option value="desc">High to Low</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Grouped by Medicine Name -->
+    <div *ngFor="let group of groupByMedicineName()" class="medicine-group">
+      <h3 class="medicine-group-title">{{ group.name }}</h3>
+      <div class="results-grid">
+        <div *ngFor="let medicine of group.results" class="medicine-card">
+          <div class="medicine-header">
+            <div class="medicine-title-section">
+              <h4 class="medicine-name">{{ medicine.pharmacyName }}</h4>
+              <span *ngIf="medicine.distanceInKm" class="distance-badge">
+                📍 {{ formatDistance(medicine.distanceInKm) }}
+              </span>
+            </div>
+            <span class="price-badge">{{ medicine.price }} Birr</span>
+          </div>
+
+          <div class="medicine-info">
+            <div class="info-item">
+              <span class="info-icon">🏥</span>
+              <span class="info-text">{{ getPharmacyAddress(medicine) }}</span>
+            </div>
+            
+            <div class="info-item">
+              <span class="info-icon">📞</span>
+              <span class="info-text">{{ medicine.pharmacyPhoneNumber }}</span>
+            </div>
+
+            <div class="info-item">
+              <span class="info-icon">📦</span>
+              <span class="info-text">
+                <span [class.in-stock]="medicine.isAvailable" [class.out-of-stock]="!medicine.isAvailable">
+                  {{ formatStockStatus(medicine) }}
+                </span>
+              </span>
+            </div>
+
+            <div *ngIf="medicine.manufacturer" class="info-item">
+              <span class="info-icon">🏭</span>
+              <span class="info-text">Manufacturer: {{ medicine.manufacturer }}</span>
+            </div>
+
+            <div *ngIf="medicine.category" class="info-item">
+              <span class="info-icon">🏷️</span>
+              <span class="info-text">Category: {{ medicine.category }}</span>
+            </div>
+
+            <div *ngIf="medicine.isPrescriptionRequired" class="info-item">
+              <span class="info-icon">📋</span>
+              <span class="info-text prescription-required">Prescription Required</span>
+            </div>
+          </div>
+
+          <div class="medicine-actions">
+            <button class="btn btn-primary btn-sm" (click)="viewPharmacy(medicine.pharmacyId)">
+              View Pharmacy
+            </button>
+            <button 
+              class="btn btn-outline btn-sm" 
+              (click)="getDirections(medicine.pharmacyLatitude, medicine.pharmacyLongitude)">
+              📍 Get Directions
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!isLoading && filteredMedicines.length === 0 && searchQuery && searchQuery.trim() && !error" class="empty-state">
+    <div class="empty-icon">💊</div>
+    <h2>No medicines found</h2>
+    <p>No medicines found matching "<strong>{{ searchQuery }}</strong>". Try:</p>
+    <ul>
+      <li>Checking your spelling</li>
+      <li>Using a different medicine name or partial name</li>
+      <li>Adjusting your filters (price, distance, availability)</li>
+      <li>Clearing some filters to see more results</li>
+    </ul>
+    <button class="btn btn-outline" (click)="clearSearch()">
+      Clear Search & Show All
+    </button>
+  </div>
+
+  <div *ngIf="!isLoading && filteredMedicines.length === 0 && !searchQuery && !error" class="empty-state">
+    <div class="empty-icon">💊</div>
+    <h2>No medicines available</h2>
+    <p>There are currently no medicines available in the system.</p>
+  </div>
+</div>
+

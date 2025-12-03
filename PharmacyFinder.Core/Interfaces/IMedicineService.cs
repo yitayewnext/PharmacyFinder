@@ -10,5 +10,14 @@ namespace PharmacyFinder.Application.Interfaces
         Task<MedicineDto?> GetMedicineByIdAsync(int medicineId);
         Task<List<MedicineDto>> GetMedicinesByPharmacyIdAsync(int pharmacyId);
         Task<List<MedicineDto>> SearchMedicinesAsync(string query);
+        Task<List<MedicineSearchResultDto>> SearchMedicinesWithPharmacyAsync(
+            string query,
+            double? userLatitude,
+            double? userLongitude,
+            bool? availableOnly,
+            decimal? minPrice,
+            decimal? maxPrice,
+            string? category,
+            double? maxDistanceKm);
     }
 }

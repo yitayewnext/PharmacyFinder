@@ -1,0 +1,75 @@
+<div class="prescription-list-container">
+  <div class="list-header">
+    <div class="header-content">
+      <h2>My Prescriptions</h2>
+      <p class="header-subtitle">View and manage your uploaded prescriptions</p>
+    </div>
+    <a routerLink="/customer/prescriptions/upload" class="btn btn-primary">
+      + Upload New Prescription
+    </a>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p class="loading-text">Loading prescriptions...</p>
+  </div>
+
+  <div *ngIf="error" class="alert alert-error" role="alert">
+    <strong>Error!</strong>
+    <span>{{ error }}</span>
+  </div>
+
+  <div *ngIf="!isLoading && !error">
+    <div *ngIf="prescriptions.length === 0" class="empty-state">
+      <div class="empty-state-icon">📄</div>
+      <h3 class="empty-state-title">No Prescriptions Yet</h3>
+      <p class="empty-state-text">Upload your first prescription to get started</p>
+      <a routerLink="/customer/prescriptions/upload" class="btn btn-primary">
+        Upload Prescription
+      </a>
+    </div>
+
+    <div *ngIf="prescriptions.length > 0" class="prescription-grid">
+      <div *ngFor="let prescription of prescriptions" class="prescription-card" [routerLink]="['/customer/prescriptions', prescription.id]">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="prescription-icon">📋</span>
+            <span>Prescription #{{ prescription.id }}</span>
+          </div>
+          <span class="status-badge" [ngClass]="getStatusClass(prescription.status)">
+            {{ getStatusText(prescription.status) }}
+          </span>
+        </div>
+
+        <div class="card-body">
+          <div class="prescription-image-container">
+            <img [src]="getFullImageUrl(prescription.imageUrl)" 
+                 [alt]="'Prescription ' + prescription.id"
+                 class="prescription-thumbnail"
+                 (error)="onImageError($event)">
+          </div>
+
+          <div class="prescription-details">
+            <div class="detail-item">
+              <span class="detail-label">Uploaded:</span>
+              <span class="detail-value">{{ formatDate(prescription.uploadedAt) }}</span>
+            </div>
+            <div *ngIf="prescription.processedAt" class="detail-item">
+              <span class="detail-label">Processed:</span>
+              <span class="detail-value">{{ formatDate(prescription.processedAt) }}</span>
+            </div>
+            <div *ngIf="prescription.medicines && prescription.medicines.length > 0" class="detail-item">
+              <span class="detail-label">Medicines Found:</span>
+              <span class="detail-value">{{ prescription.medicines.length }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-footer">
+          <span class="view-link">View Details →</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
